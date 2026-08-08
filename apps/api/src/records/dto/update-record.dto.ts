@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsInt, IsISO8601, IsString, MaxLength, Min } from "class-validator";
+import { IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, MaxLength, Min } from "class-validator";
 
 const RECORD_TYPES = ["DAILY", "FIRST", "FAMILY", "OTHER"] as const;
 
@@ -21,4 +21,10 @@ export class UpdateRecordDto {
   @IsInt()
   @Min(1)
   version!: number;
+
+  @ApiProperty({ type: [String], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  assetIds?: string[];
 }

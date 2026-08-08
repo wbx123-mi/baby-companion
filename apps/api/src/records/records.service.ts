@@ -3,6 +3,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { ulid } from "ulid";
 import { AppException } from "../common/app.exception";
 import { PrismaService } from "../prisma/prisma.service";
+import { MediaService } from "../media/media.service";
 import type { CreateRecordDto } from "./dto/create-record.dto";
 import type { DeleteRecordDto } from "./dto/delete-record.dto";
 import type { ListRecordsDto } from "./dto/list-records.dto";
@@ -10,7 +11,7 @@ import type { UpdateRecordDto } from "./dto/update-record.dto";
 
 @Injectable()
 export class RecordsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly mediaService: MediaService) {}
 
   async list(userId: string, input: ListRecordsDto): Promise<GrowthRecordContract[]> {
     const context = await this.getBabyContext(userId, input.babyId);
@@ -23,10 +24,10 @@ export class RecordsService {
         ...(input.type ? { type: input.type } : {}),
         ...(occurredAt ? { occurredAt } : {}),
       },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: true },
+      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
       orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
     });
-    return records.map((record) => this.mapRecord(record));
+    return Promise.all(records.map((record) => this.mapRecord(record)));
   }
 
   async getById(userId: string, recordId: string): Promise<GrowthRecordContract> {
@@ -43,7 +44,7 @@ export class RecordsService {
     if (input.clientRequestId) {
       const existing = await this.prisma.growthRecord.findUnique({
         where: { creatorUserId_clientRequestId: { creatorUserId: userId, clientRequestId: input.clientRequestId } },
-        include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: true },
+        include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
       });
       if (existing) return this.mapRecord(existing);
     }
@@ -59,9 +60,10 @@ export class RecordsService {
         occurredAt,
         clientRequestId: input.clientRequestId,
       },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: true },
+      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
     });
-    return this.mapRecord(record);
+    await this.replaceAssets(record.id, context.familyId, input.babyId, userId, input.assetIds || []);
+    return this.getById(userId, record.id);
   }
 
   async update(userId: string, recordId: string, input: UpdateRecordDto): Promise<GrowthRecordContract> {
@@ -77,6 +79,7 @@ export class RecordsService {
     if (updated.count !== 1) {
       throw new AppException("RECORD_VERSION_CONFLICT", "记录已被其他家人修改，请刷新后重试", HttpStatus.CONFLICT);
     }
+    await this.replaceAssets(recordId, record.familyId, record.babyId, userId, input.assetIds ?? record.assets.map((asset) => asset.mediaAssetId));
     return this.getById(userId, recordId);
   }
 
@@ -116,7 +119,7 @@ export class RecordsService {
   private async findActiveRecord(recordId: string) {
     const record = await this.prisma.growthRecord.findFirst({
       where: { id: recordId, status: "ACTIVE" },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: true },
+      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
     });
     if (!record) throw new AppException("RECORD_NOT_FOUND", "这条记录不存在或已删除", HttpStatus.NOT_FOUND);
     return record;
@@ -143,7 +146,7 @@ export class RecordsService {
     return { gte: start, lt: end };
   }
 
-  private mapRecord(record: {
+  private async mapRecord(record: {
     id: string;
     familyId: string;
     babyId: string;
@@ -154,7 +157,8 @@ export class RecordsService {
     createdAt: Date;
     updatedAt: Date;
     creator: { id: string; nickname: string | null; avatarUrl: string | null };
-  }): GrowthRecordContract {
+    assets: Array<{ sortOrder: number; mediaAsset: { id: string; category: "IMAGE"; width: number | null; height: number | null; status: string; objectKey: string } }>;
+  }): Promise<GrowthRecordContract> {
     return {
       id: record.id,
       familyId: record.familyId,
@@ -163,10 +167,31 @@ export class RecordsService {
       content: record.content,
       occurredAt: record.occurredAt.toISOString(),
       creator: record.creator,
-      assets: [],
+      assets: await Promise.all(record.assets.map(async (asset) => ({
+        id: asset.mediaAsset.id,
+        category: asset.mediaAsset.category,
+        width: asset.mediaAsset.width || 0,
+        height: asset.mediaAsset.height || 0,
+        status: "READY",
+        sortOrder: asset.sortOrder,
+        accessUrl: await this.mediaService.getReadUrl(asset.mediaAsset.objectKey),
+      }))),
       version: record.version,
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
     };
+  }
+
+  private async replaceAssets(recordId: string, familyId: string, babyId: string, userId: string, assetIds: string[]): Promise<void> {
+    const uniqueIds = [...new Set(assetIds)];
+    if (uniqueIds.length > 9) throw new AppException("RECORD_ASSET_LIMIT", "最多上传 9 张照片", HttpStatus.BAD_REQUEST);
+    if (uniqueIds.length) {
+      const assets = await this.prisma.mediaAsset.findMany({ where: { id: { in: uniqueIds }, familyId, babyId, uploaderUserId: userId, status: "READY" }, select: { id: true } });
+      if (assets.length !== uniqueIds.length) throw new AppException("RECORD_ASSET_INVALID", "存在无效或未完成上传的照片", HttpStatus.BAD_REQUEST);
+    }
+    await this.prisma.$transaction([
+      this.prisma.growthRecordAsset.deleteMany({ where: { growthRecordId: recordId } }),
+      ...(uniqueIds.map((mediaAssetId, sortOrder) => this.prisma.growthRecordAsset.create({ data: { growthRecordId: recordId, mediaAssetId, sortOrder } }))),
+    ]);
   }
 }

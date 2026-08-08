@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { mockApi } from "@/services/mock-api";
 import { authApi } from "@/api/auth-api";
 import { recordsApi } from "@/api/records-api";
+import { profilesApi } from "@/api/profiles-api";
 import type {
   Baby,
   BootstrapData,
@@ -74,15 +75,19 @@ export const useAppStore = defineStore("app", () => {
   }
 
   async function saveBaby(input: UpdateBabyInput): Promise<Baby> {
-    const response = await mockApi.updateBaby(input);
-    if (bootstrapData.value) bootstrapData.value.baby = response.data;
-    return response.data;
+    const currentBaby = baby.value;
+    if (!currentBaby) throw new Error("宝宝档案不存在");
+    const saved = await profilesApi.updateBaby(currentBaby.id, input);
+    if (bootstrapData.value) bootstrapData.value.baby = saved;
+    return saved;
   }
 
   async function saveFamily(name: string): Promise<Family> {
-    const response = await mockApi.updateFamily(name);
-    if (bootstrapData.value) bootstrapData.value.families[0] = response.data;
-    return response.data;
+    const currentFamily = family.value;
+    if (!currentFamily) throw new Error("家庭不存在");
+    const saved = await profilesApi.updateFamily(currentFamily.id, name);
+    if (bootstrapData.value) bootstrapData.value.families[0] = saved;
+    return saved;
   }
 
   function setFilters(nextFilters: RecordFilters): void {

@@ -38,7 +38,7 @@ export interface MediaAssetContract {
   height: number;
   status: "READY";
   sortOrder: number;
-  accessUrl?: string;
+  accessUrl: string;
 }
 
 export interface GrowthRecordContract {

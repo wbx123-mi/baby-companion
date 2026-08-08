@@ -14,7 +14,7 @@
     "type-check": "pnpm --filter @baby-companion/contracts type-check && pnpm --filter @baby-companion/miniapp type-check && pnpm --filter @baby-companion/api type-check",
     "test": "pnpm --filter @baby-companion/api test",
     "test:e2e": "pnpm --filter @baby-companion/api test:e2e",
-    "db:up": "docker compose up -d mysql",
+    "db:up": "docker compose up -d mysql minio minio-init",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @baby-companion/api prisma:generate",
     "db:migrate": "pnpm --filter @baby-companion/api prisma:migrate",

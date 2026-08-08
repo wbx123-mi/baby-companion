@@ -10,7 +10,7 @@ function toGrowthRecord(record: GrowthRecordContract): GrowthRecord {
       nickname: record.creator.nickname || "家人",
       avatarUrl: record.creator.avatarUrl,
     },
-    assets: [],
+    assets: record.assets.map((asset) => ({ ...asset, url: asset.accessUrl, localPath: null })),
     status: "ACTIVE",
   };
 }
@@ -44,6 +44,7 @@ export const recordsApi = {
         content: input.content,
         occurredAt: input.occurredAt,
         clientRequestId: createClientRequestId(),
+        assetIds: input.assets.map((asset) => asset.id),
       },
     }));
   },
@@ -57,6 +58,7 @@ export const recordsApi = {
         content: input.content,
         occurredAt: input.occurredAt,
         version: input.version,
+        assetIds: input.assets.map((asset) => asset.id),
       },
     }));
   },

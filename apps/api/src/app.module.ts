@@ -10,6 +10,8 @@ import { BootstrapModule } from "./bootstrap/bootstrap.module";
 import { OnboardingModule } from "./onboarding/onboarding.module";
 import { FamilyInvitesModule } from "./family-invites/family-invites.module";
 import { RecordsModule } from "./records/records.module";
+import { MediaModule } from "./media/media.module";
+import { ProfilesModule } from "./profiles/profiles.module";
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { RecordsModule } from "./records/records.module";
     OnboardingModule,
     FamilyInvitesModule,
     RecordsModule,
+    MediaModule,
+    ProfilesModule,
     HealthModule,
   ],
   controllers: [AppController],

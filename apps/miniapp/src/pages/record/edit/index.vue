@@ -3,19 +3,23 @@ import { computed, reactive, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { RECORD_TYPE_OPTIONS } from "@/constants/records";
 import { recordsApi } from "@/api/records-api";
+import { mediaApi } from "@/api/media-api";
 import { useAppStore } from "@/stores/app";
-import type { RecordType } from "@/types/domain";
+import MediaGallery from "@/components/MediaGallery.vue";
+import type { MediaAsset, RecordType } from "@/types/domain";
 import { toIsoDatetime, toLocalDatetimeValue } from "@/utils/date";
 
 const store = useAppStore();
 const recordId = ref<string>();
 const saving = ref(false);
+const uploading = ref(false);
 
 const form = reactive({
   type: "DAILY" as RecordType,
   content: "",
   occurredAt: Date.now(),
   version: undefined as number | undefined,
+  assets: [] as MediaAsset[],
 });
 
 const title = computed(() => (recordId.value ? "编辑成长记录" : "记录这一刻"));
@@ -37,6 +41,7 @@ onLoad(async (query) => {
     form.content = record.content;
     form.occurredAt = toLocalDatetimeValue(record.occurredAt);
     form.version = record.version;
+    form.assets = record.assets;
   } catch (error) {
     uni.showToast({ title: error instanceof Error ? error.message : "记录加载失败", icon: "none" });
   }
@@ -59,7 +64,7 @@ async function submit(): Promise<void> {
       type: form.type,
       content,
       occurredAt: toIsoDatetime(form.occurredAt),
-      assets: [],
+      assets: form.assets,
       version: form.version,
     });
     uni.showToast({ title: recordId.value ? "已保存" : "记录成功", icon: "success" });
@@ -69,6 +74,39 @@ async function submit(): Promise<void> {
   } finally {
     saving.value = false;
   }
+}
+
+function chooseImages(): void {
+  const remaining = 9 - form.assets.length;
+  if (remaining <= 0) {
+    uni.showToast({ title: "最多上传 9 张照片", icon: "none" });
+    return;
+  }
+  uni.chooseImage({
+    count: remaining,
+    sizeType: ["compressed"],
+    sourceType: ["album", "camera"],
+    success: async ({ tempFilePaths }) => {
+      if (!store.baby) return;
+      uploading.value = true;
+      uni.showLoading({ title: "正在上传照片" });
+      try {
+        const paths = Array.isArray(tempFilePaths) ? tempFilePaths : [tempFilePaths];
+        const uploaded = await Promise.all(paths.map((filePath) => mediaApi.uploadImage(store.baby!.id, filePath)));
+        form.assets.push(...uploaded);
+      } catch (error) {
+        uni.showToast({ title: error instanceof Error ? error.message : "图片上传失败", icon: "none" });
+      } finally {
+        uploading.value = false;
+        uni.hideLoading();
+      }
+    },
+  });
+}
+
+function removeAsset(assetId: string): void {
+  const index = form.assets.findIndex((asset) => asset.id === assetId);
+  if (index >= 0) form.assets.splice(index, 1);
 }
 </script>
 
@@ -111,8 +149,16 @@ async function submit(): Promise<void> {
         />
       </view>
 
-      <view class="record-editor__media-tip">
-        <text>📷 文字成长记录已同步到家庭数据库，图片上传功能准备中。</text>
+      <view class="record-editor__media">
+        <view class="record-editor__media-header">
+          <text class="record-editor__label">成长照片（{{ form.assets.length }}/9）</text>
+          <wd-button size="small" plain :loading="uploading" @click="chooseImages">添加照片</wd-button>
+        </view>
+        <MediaGallery :assets="form.assets" />
+        <view v-if="form.assets.length" class="record-editor__media-actions">
+          <wd-button v-for="asset in form.assets" :key="asset.id" size="small" type="info" plain @click="removeAsset(asset.id)">移除照片</wd-button>
+        </view>
+        <text v-else class="record-editor__media-tip">照片上传后，家庭成员可共同查看。</text>
       </view>
     </view>
 
@@ -160,18 +206,33 @@ async function submit(): Promise<void> {
   }
 
   &__field,
-  &__media-tip {
+  &__media {
     margin-top: 28rpx;
     padding-top: 12rpx;
     border-top: 1rpx solid var(--color-divider);
   }
 
+  &__media-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   &__media-tip {
-    padding: 22rpx;
+    display: block;
+    margin-top: 16rpx;
+    padding: 18rpx;
     color: var(--color-text-placeholder);
     background: var(--color-surface-muted);
     border-radius: 18rpx;
     font-size: 21rpx;
+  }
+
+  &__media-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+    margin-top: 16rpx;
   }
 
   &__actions {

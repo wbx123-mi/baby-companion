@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsISO8601, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsArray, IsIn, IsISO8601, IsOptional, IsString, MaxLength } from "class-validator";
 
 const RECORD_TYPES = ["DAILY", "FIRST", "FAMILY", "OTHER"] as const;
 
@@ -27,4 +27,10 @@ export class CreateRecordDto {
   @IsString()
   @MaxLength(128)
   clientRequestId?: string;
+
+  @ApiPropertyOptional({ type: [String], description: "已上传图片的资源 ID" })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  assetIds?: string[];
 }

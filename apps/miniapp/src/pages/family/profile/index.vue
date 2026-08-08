@@ -131,7 +131,7 @@ async function submit(): Promise<void> {
 
     <view class="family-profile__notice">
       <text class="family-profile__notice-icon">🔒</text>
-      <text>正式后端会按 familyId 做数据隔离，并在每次访问时校验家庭成员关系。</text>
+      <text>家庭资料、成员关系和成长记录均已按 familyId 隔离，每次访问都会校验成员关系。</text>
     </view>
 
     <view class="family-profile__actions">
