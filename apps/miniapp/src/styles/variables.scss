@@ -1,0 +1,49 @@
+:root,
+page {
+  --color-primary: #ef765b;
+  --color-primary-strong: #d95f48;
+  --color-primary-soft: #fff0e9;
+  --color-accent: #f5b95f;
+  --color-success: #56a179;
+  --color-danger: #d85e5e;
+  --color-bg: #fff8f2;
+  --color-bg-secondary: #fff2e8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fffaf6;
+  --color-text: #352f2c;
+  --color-text-secondary: #7f746e;
+  --color-text-placeholder: #a99e98;
+  --color-border: #eee4dd;
+  --color-divider: #f4ece7;
+  --color-overlay: rgba(53, 47, 44, 0.42);
+  --shadow-card: 0 12rpx 36rpx rgba(130, 83, 58, 0.08);
+  --gradient-hero: linear-gradient(145deg, #fff0e3 0%, #ffe3dc 55%, #fff8f2 100%);
+  --gradient-sun: linear-gradient(145deg, #ffe4a8 0%, #ffc47d 100%);
+  --gradient-heart: linear-gradient(145deg, #ffd9da 0%, #ffaaa8 100%);
+  --gradient-sky: linear-gradient(145deg, #dcefff 0%, #b9d9f6 100%);
+}
+
+.wot-theme-dark {
+  --color-primary: #ff9b84;
+  --color-primary-strong: #ffad9a;
+  --color-primary-soft: #4b302b;
+  --color-accent: #f3bd73;
+  --color-success: #79c69a;
+  --color-danger: #ef8a8a;
+  --color-bg: #1d1918;
+  --color-bg-secondary: #28211f;
+  --color-surface: #2f2825;
+  --color-surface-muted: #352d29;
+  --color-text: #fff8f3;
+  --color-text-secondary: #c8b9b1;
+  --color-text-placeholder: #978a84;
+  --color-border: #493d38;
+  --color-divider: #3f3531;
+  --color-overlay: rgba(0, 0, 0, 0.58);
+  --shadow-card: 0 12rpx 36rpx rgba(0, 0, 0, 0.22);
+  --gradient-hero: linear-gradient(145deg, #49342d 0%, #3a2926 55%, #28211f 100%);
+  --gradient-sun: linear-gradient(145deg, #8d6635 0%, #7c4f2c 100%);
+  --gradient-heart: linear-gradient(145deg, #74464a 0%, #6a3738 100%);
+  --gradient-sky: linear-gradient(145deg, #3d596b 0%, #334b60 100%);
+}
+

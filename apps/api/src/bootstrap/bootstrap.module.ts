@@ -1,0 +1,12 @@
+import { Module } from "@nestjs/common";
+import { AuthModule } from "../auth/auth.module";
+import { BootstrapController } from "./bootstrap.controller";
+import { BootstrapService } from "./bootstrap.service";
+
+@Module({
+  imports: [AuthModule],
+  controllers: [BootstrapController],
+  providers: [BootstrapService],
+  exports: [BootstrapService],
+})
+export class BootstrapModule {}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+apps/api/src/generated/
+.hbuilderx/
+.idea/
+.vscode/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example

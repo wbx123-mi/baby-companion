@@ -1,0 +1,316 @@
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { onShow } from "@dcloudio/uni-app";
+import { useMessage } from "wot-design-uni/components/wd-message-box/index";
+import { authApi } from "@/api/auth-api";
+import { useAppStore } from "@/stores/app";
+import { calculateAgeText } from "@/utils/date";
+
+const store = useAppStore();
+const message = useMessage();
+const displayName = computed(() => {
+  const nickname = store.user?.nickname;
+  return !nickname || nickname === "小舅舅" ? "家人" : nickname;
+});
+const babyName = computed(() => store.baby?.nickname || "宝宝");
+const nicknameVisible = ref(false);
+const nicknameInput = ref("");
+const nicknameSaving = ref(false);
+
+onShow(() => {
+  void store.bootstrap();
+});
+
+function navigate(url: string): void {
+  uni.navigateTo({ url });
+}
+
+function goHome(): void {
+  uni.switchTab({ url: "/pages/home/index" });
+}
+
+function openNicknameEditor(): void {
+  nicknameInput.value = displayName.value;
+  nicknameVisible.value = true;
+}
+
+async function saveNickname(): Promise<void> {
+  const nickname = nicknameInput.value.trim();
+  if (!nickname) {
+    uni.showToast({ title: "请输入家庭昵称", icon: "none" });
+    return;
+  }
+  nicknameSaving.value = true;
+  try {
+    const user = await authApi.updateNickname(nickname);
+    store.setCurrentUserNickname(user.nickname || nickname);
+    nicknameVisible.value = false;
+    uni.showToast({ title: "昵称已更新", icon: "success" });
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
+  } finally {
+    nicknameSaving.value = false;
+  }
+}
+
+function switchDevelopmentIdentity(): void {
+  const identities = [
+    { subject: "local-owner", nickname: "家人", label: "家人（家庭创建者）" },
+    { subject: "local-relative", nickname: "家人", label: "家人（邀请加入者）" },
+  ];
+  uni.showActionSheet({
+    itemList: identities.map((identity) => identity.label),
+    success: async ({ tapIndex }) => {
+      const identity = identities[tapIndex];
+      if (!identity) return;
+      uni.showLoading({ title: "正在切换身份" });
+      try {
+        await authApi.switchDevelopmentIdentity({
+          subject: identity.subject,
+          nickname: identity.nickname,
+        });
+        await store.bootstrap(true);
+        uni.switchTab({ url: "/pages/home/index" });
+      } catch (error) {
+        uni.showToast({ title: error instanceof Error ? error.message : "切换失败", icon: "none" });
+      } finally {
+        uni.hideLoading();
+      }
+    },
+  });
+}
+
+async function resetDemo(): Promise<void> {
+  try {
+    await message.confirm({
+      title: "恢复演示数据？",
+      msg: "你在 Mock 版本中新增和修改的内容会被初始演示数据替换。",
+      confirmButtonText: "恢复",
+    });
+    await store.resetDemo();
+    uni.showToast({ title: "已恢复", icon: "success" });
+  } catch {
+    // 用户取消确认时无需处理。
+  }
+}
+</script>
+
+<template>
+  <view :class="['page-shell', 'mine-page', store.themeClass]">
+    <view class="mine-page__user-card">
+      <view class="mine-page__avatar">🙋🏻‍♂️</view>
+      <view class="mine-page__identity">
+        <text class="mine-page__name">{{ displayName }}</text>
+        <text class="mine-page__role">
+          {{ !store.family ? "尚未加入家庭" : store.family.role === "ADMIN" ? "家庭管理员" : "家庭成员" }}
+        </text>
+      </view>
+      <view class="mine-page__badge">体验版</view>
+    </view>
+
+    <view v-if="store.baby" class="mine-page__baby-note">
+      <text>👶🏻 {{ store.baby.nickname }}</text>
+      <text>{{ calculateAgeText(store.baby.birthDate) }}</text>
+    </view>
+
+    <view class="mine-page__group">
+      <text class="section-title">个人</text>
+      <wd-cell-group border custom-class="mine-cell-group">
+        <wd-cell title="家庭昵称" :value="displayName" label="家人看到你的称呼" clickable is-link @click="openNicknameEditor">
+          <template #icon><text class="mine-page__cell-icon">🙋🏻</text></template>
+        </wd-cell>
+      </wd-cell-group>
+    </view>
+
+    <view class="mine-page__group">
+      <text class="section-title">家庭</text>
+      <wd-cell-group border custom-class="mine-cell-group">
+        <wd-cell
+          v-if="store.family"
+          title="宝宝档案"
+          :value="store.baby?.nickname || '未设置'"
+          label="出生信息、昵称与简介"
+          is-link
+          size="large"
+          @click="navigate('/pages/baby/profile/index')"
+        >
+          <template #icon><text class="mine-page__cell-icon">👶🏻</text></template>
+        </wd-cell>
+        <wd-cell
+          v-if="store.family"
+          title="家庭信息"
+          :value="store.family?.name || '未设置'"
+          label="家庭名称与我的角色"
+          is-link
+          size="large"
+          @click="navigate('/pages/family/profile/index')"
+        >
+          <template #icon><text class="mine-page__cell-icon">🏠</text></template>
+        </wd-cell>
+        <wd-cell
+          v-if="!store.family"
+          title="创建或加入家庭"
+          label="和家人一起记录宝宝成长"
+          is-link
+          size="large"
+          @click="goHome"
+        >
+          <template #icon><text class="mine-page__cell-icon">🏠</text></template>
+        </wd-cell>
+      </wd-cell-group>
+    </view>
+
+    <view class="mine-page__group">
+      <text class="section-title">偏好与开发</text>
+      <wd-cell-group border custom-class="mine-cell-group">
+        <wd-cell title="深色模式" label="跟着此项目独立保存">
+          <template #icon><text class="mine-page__cell-icon">🌙</text></template>
+          <template #value>
+            <wd-switch :model-value="store.darkMode" @update:model-value="store.setDarkMode" />
+          </template>
+        </wd-cell>
+        <wd-cell title="Mock 数据" value="恢复初始内容" clickable is-link @click="resetDemo">
+          <template #icon><text class="mine-page__cell-icon">🧪</text></template>
+        </wd-cell>
+        <wd-cell
+          v-if="authApi.isDevelopmentLoginEnabled"
+          title="切换演示身份"
+          :value="authApi.getDevelopmentIdentity().nickname"
+          label="单设备测试创建者与加入者"
+          clickable
+          is-link
+          @click="switchDevelopmentIdentity"
+        >
+          <template #icon><text class="mine-page__cell-icon">🔁</text></template>
+        </wd-cell>
+        <wd-cell title="当前版本" value="0.2.0 · Hybrid API">
+          <template #icon><text class="mine-page__cell-icon">🧩</text></template>
+        </wd-cell>
+      </wd-cell-group>
+    </view>
+
+    <text class="mine-page__footer">只属于家人的小小成长簿</text>
+    <wd-popup v-model="nicknameVisible" position="bottom" custom-style="border-radius: 32rpx 32rpx 0 0;">
+      <view class="nickname-editor">
+        <text class="nickname-editor__title">在 {{ babyName }} 的成长簿中，你是？</text>
+        <text class="nickname-editor__subtitle">例如：{{ babyName }}的妈妈、外婆或舅舅</text>
+        <wd-input v-model="nicknameInput" :label="`${babyName}的`" placeholder="例如：舅舅" :maxlength="64" clearable />
+        <view class="nickname-editor__actions">
+          <wd-button block size="large" :loading="nicknameSaving" @click="saveNickname">保存昵称</wd-button>
+        </view>
+      </view>
+    </wd-popup>
+    <wd-message-box />
+  </view>
+</template>
+
+<style lang="scss">
+.mine-page {
+  &__user-card {
+    display: flex;
+    padding: 34rpx;
+    align-items: center;
+    border: 1rpx solid var(--color-border);
+    border-radius: 32rpx;
+    background: var(--gradient-hero);
+    box-shadow: var(--shadow-card);
+  }
+
+  &__avatar {
+    display: flex;
+    width: 104rpx;
+    height: 104rpx;
+    align-items: center;
+    justify-content: center;
+    border: 6rpx solid var(--color-surface);
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    font-size: 48rpx;
+  }
+
+  &__identity {
+    display: flex;
+    min-width: 0;
+    margin-left: 22rpx;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  &__name {
+    font-size: 36rpx;
+    font-weight: 800;
+  }
+
+  &__role {
+    margin-top: 5rpx;
+    color: var(--color-text-secondary);
+    font-size: 23rpx;
+  }
+
+  &__badge {
+    padding: 8rpx 14rpx;
+    border-radius: 999rpx;
+    color: var(--color-primary-strong);
+    background: var(--color-primary-soft);
+    font-size: 20rpx;
+  }
+
+  &__baby-note {
+    display: flex;
+    margin-top: 20rpx;
+    padding: 20rpx 26rpx;
+    justify-content: space-between;
+    border-radius: 20rpx;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    font-size: 24rpx;
+  }
+
+  &__group {
+    margin-top: 34rpx;
+  }
+
+  &__cell-icon {
+    margin-right: 18rpx;
+    font-size: 32rpx;
+  }
+
+  &__footer {
+    display: block;
+    padding: 52rpx 0 28rpx;
+    color: var(--color-text-placeholder);
+    font-size: 21rpx;
+    text-align: center;
+  }
+}
+
+.nickname-editor {
+  padding: 38rpx 28rpx calc(38rpx + env(safe-area-inset-bottom));
+  color: var(--color-text);
+  background: var(--color-surface);
+
+  &__title {
+    display: block;
+    font-size: 34rpx;
+    font-weight: 800;
+  }
+
+  &__subtitle {
+    display: block;
+    margin: 10rpx 0 24rpx;
+    color: var(--color-text-secondary);
+    font-size: 23rpx;
+  }
+
+  &__actions {
+    margin-top: 28rpx;
+  }
+}
+
+.mine-cell-group {
+  overflow: hidden !important;
+  border-radius: 26rpx !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+</style>

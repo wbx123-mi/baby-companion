@@ -1,0 +1,105 @@
+{
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/launch/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/onboarding/index",
+      "style": {
+        "navigationBarTitleText": "创建宝宝的家"
+      }
+    },
+    {
+      "path": "pages/join-family/index",
+      "style": {
+        "navigationBarTitleText": "加入家庭"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/growth/index",
+      "style": {
+        "navigationBarTitleText": "成长",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/record/edit/index",
+      "style": {
+        "navigationBarTitleText": "记录成长"
+      }
+    },
+    {
+      "path": "pages/record/detail/index",
+      "style": {
+        "navigationBarTitleText": "成长详情"
+      }
+    },
+    {
+      "path": "pages/baby/profile/index",
+      "style": {
+        "navigationBarTitleText": "宝宝档案"
+      }
+    },
+    {
+      "path": "pages/family/profile/index",
+      "style": {
+        "navigationBarTitleText": "家庭信息"
+      }
+    },
+    {
+      "path": "pages/common/unavailable/index",
+      "style": {
+        "navigationBarTitleText": "暂时不可用"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#9B8F89",
+    "selectedColor": "#EF765B",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/growth/index",
+        "text": "成长"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "Baby Companion",
+    "navigationBarBackgroundColor": "#FFF8F2",
+    "backgroundColor": "#FFF8F2",
+    "backgroundTextStyle": "dark"
+  }
+}

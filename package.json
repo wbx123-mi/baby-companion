@@ -1,0 +1,39 @@
+{
+  "name": "baby-companion-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "家庭私域宝宝成长陪伴小程序 Monorepo",
+  "scripts": {
+    "dev:miniapp": "pnpm --filter @baby-companion/miniapp dev:mp-weixin",
+    "dev:h5": "pnpm --filter @baby-companion/miniapp dev:h5",
+    "dev:api": "pnpm --filter @baby-companion/api start:dev",
+    "build:contracts": "pnpm --filter @baby-companion/contracts build",
+    "build:miniapp": "pnpm --filter @baby-companion/miniapp build:mp-weixin",
+    "build:api": "pnpm --filter @baby-companion/api build",
+    "build": "pnpm build:contracts && pnpm build:miniapp && pnpm build:api",
+    "type-check": "pnpm --filter @baby-companion/contracts type-check && pnpm --filter @baby-companion/miniapp type-check && pnpm --filter @baby-companion/api type-check",
+    "test": "pnpm --filter @baby-companion/api test",
+    "test:e2e": "pnpm --filter @baby-companion/api test:e2e",
+    "db:up": "docker compose up -d mysql",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @baby-companion/api prisma:generate",
+    "db:migrate": "pnpm --filter @baby-companion/api prisma:migrate",
+    "db:seed": "pnpm --filter @baby-companion/api prisma:seed",
+    "db:studio": "pnpm --filter @baby-companion/api prisma:studio"
+  },
+  "engines": {
+    "node": ">=20.19",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.11.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "core-js",
+      "core-js-pure",
+      "esbuild",
+      "prisma",
+      "vue-demi"
+    ]
+  }
+}

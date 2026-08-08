@@ -1,0 +1,347 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum IdentityProvider {
+  WECHAT_MINI_PROGRAM
+}
+
+enum RefreshTokenStatus {
+  ACTIVE
+  ROTATED
+  REVOKED
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum FamilyStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum MemberRole {
+  ADMIN
+  PARENT
+  RELATIVE
+}
+
+enum MemberStatus {
+  ACTIVE
+  REMOVED
+}
+
+enum FamilyInviteStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum BabyGender {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
+enum BabyStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum GrowthRecordType {
+  DAILY
+  FIRST
+  FAMILY
+  OTHER
+}
+
+enum GrowthRecordStatus {
+  ACTIVE
+  DELETED
+}
+
+enum MediaCategory {
+  IMAGE
+}
+
+enum MediaStatus {
+  PENDING
+  UPLOADED
+  READY
+  FAILED
+  DELETED
+}
+
+enum AuditResult {
+  SUCCEEDED
+  FAILED
+}
+
+model User {
+  id              String           @id @db.Char(26)
+  nickname        String?          @db.VarChar(64)
+  avatarUrl       String?          @map("avatar_url") @db.VarChar(512)
+  status          UserStatus       @default(ACTIVE)
+  identities      UserIdentity[]
+  sessions        AuthSession[]
+  idempotencyKeys IdempotencyKey[]
+  ownedFamilies   Family[]         @relation("FamilyOwner")
+  familyMembers   FamilyMember[]
+  createdInvites  FamilyInvite[]    @relation("InviteCreator")
+  growthRecords   GrowthRecord[]   @relation("RecordCreator")
+  mediaAssets     MediaAsset[]     @relation("MediaUploader")
+  auditLogs       AuditLog[]       @relation("AuditOperator")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([status, createdAt])
+  @@map("users")
+}
+
+model UserIdentity {
+  id          String           @id @db.Char(26)
+  userId      String           @map("user_id") @db.Char(26)
+  provider    IdentityProvider
+  appId       String           @map("app_id") @db.VarChar(64)
+  subject     String           @db.VarChar(128)
+  unionId     String?          @map("union_id") @db.VarChar(128)
+  lastLoginAt DateTime         @map("last_login_at") @db.DateTime(3)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@unique([provider, appId, subject])
+  @@index([userId])
+  @@index([provider, unionId])
+  @@map("user_identities")
+}
+
+model AuthSession {
+  id            String             @id @db.Char(26)
+  userId        String             @map("user_id") @db.Char(26)
+  deviceId      String?            @map("device_id") @db.VarChar(128)
+  expiresAt     DateTime           @map("expires_at") @db.DateTime(3)
+  revokedAt     DateTime?          @map("revoked_at") @db.DateTime(3)
+  lastUsedAt    DateTime?          @map("last_used_at") @db.DateTime(3)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  refreshTokens AuthRefreshToken[]
+  createdAt     DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([userId, revokedAt, expiresAt])
+  @@map("auth_sessions")
+}
+
+model AuthRefreshToken {
+  id                String             @id @db.Char(26)
+  sessionId         String             @map("session_id") @db.Char(26)
+  tokenHash         String             @map("token_hash") @db.Char(64)
+  status            RefreshTokenStatus @default(ACTIVE)
+  replacedByTokenId String?            @unique @map("replaced_by_token_id") @db.Char(26)
+  expiresAt         DateTime           @map("expires_at") @db.DateTime(3)
+  usedAt            DateTime?          @map("used_at") @db.DateTime(3)
+  revokedAt         DateTime?          @map("revoked_at") @db.DateTime(3)
+  session           AuthSession        @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  replacedBy        AuthRefreshToken?  @relation("RefreshRotation", fields: [replacedByTokenId], references: [id], onDelete: Restrict)
+  replaces          AuthRefreshToken?  @relation("RefreshRotation")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@index([sessionId, status, expiresAt])
+  @@map("auth_refresh_tokens")
+}
+
+model IdempotencyKey {
+  id             String            @id @db.Char(26)
+  userId         String            @map("user_id") @db.Char(26)
+  scope          String            @db.VarChar(64)
+  idempotencyKey String            @map("idempotency_key") @db.VarChar(128)
+  requestHash    String            @map("request_hash") @db.Char(64)
+  status         IdempotencyStatus @default(PROCESSING)
+  responseStatus Int?              @map("response_status")
+  responseJson   Json?             @map("response_json")
+  expiresAt      DateTime          @map("expires_at") @db.DateTime(3)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@unique([userId, scope, idempotencyKey])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model Family {
+  id          String         @id @db.Char(26)
+  name        String         @db.VarChar(64)
+  ownerUserId String         @map("owner_user_id") @db.Char(26)
+  status      FamilyStatus   @default(ACTIVE)
+  owner       User           @relation("FamilyOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  members     FamilyMember[]
+  invites     FamilyInvite[]
+  babies      Baby[]
+  records     GrowthRecord[]
+  mediaAssets MediaAsset[]
+  auditLogs   AuditLog[]
+  createdAt   DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([ownerUserId, status])
+  @@map("families")
+}
+
+model FamilyMember {
+  id        String       @id @db.Char(26)
+  familyId  String       @map("family_id") @db.Char(26)
+  userId    String       @map("user_id") @db.Char(26)
+  role      MemberRole
+  status    MemberStatus @default(ACTIVE)
+  joinedAt  DateTime     @map("joined_at") @db.DateTime(3)
+  removedAt DateTime?    @map("removed_at") @db.DateTime(3)
+  family    Family       @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@unique([familyId, userId])
+  @@index([userId, status])
+  @@index([familyId, status, role])
+  @@map("family_members")
+}
+
+model FamilyInvite {
+  id              String             @id @db.Char(26)
+  familyId        String             @map("family_id") @db.Char(26)
+  createdByUserId String             @map("created_by_user_id") @db.Char(26)
+  codeHash        String             @unique @map("code_hash") @db.Char(64)
+  status          FamilyInviteStatus @default(ACTIVE)
+  useCount        Int                @default(0) @map("use_count")
+  expiresAt       DateTime           @map("expires_at") @db.DateTime(3)
+  revokedAt       DateTime?          @map("revoked_at") @db.DateTime(3)
+  family          Family             @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  createdBy       User               @relation("InviteCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([familyId, status, expiresAt])
+  @@index([createdByUserId, createdAt])
+  @@map("family_invites")
+}
+
+model Baby {
+  id           String         @id @db.Char(26)
+  familyId     String         @map("family_id") @db.Char(26)
+  nickname     String         @db.VarChar(64)
+  birthDate    DateTime       @map("birth_date") @db.Date
+  birthTime    DateTime?      @map("birth_time") @db.Time(0)
+  timezone     String         @default("Asia/Shanghai") @db.VarChar(64)
+  gender       BabyGender     @default(UNSPECIFIED)
+  introduction String?        @db.Text
+  status       BabyStatus     @default(ACTIVE)
+  version      Int            @default(1)
+  family       Family         @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  records      GrowthRecord[]
+  mediaAssets  MediaAsset[]
+  createdAt    DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([familyId, status])
+  @@map("babies")
+}
+
+model GrowthRecord {
+  id              String              @id @db.Char(26)
+  familyId        String              @map("family_id") @db.Char(26)
+  babyId          String              @map("baby_id") @db.Char(26)
+  creatorUserId   String              @map("creator_user_id") @db.Char(26)
+  type            GrowthRecordType
+  content         String              @db.Text
+  occurredAt      DateTime            @map("occurred_at") @db.DateTime(3)
+  status          GrowthRecordStatus  @default(ACTIVE)
+  clientRequestId String?             @map("client_request_id") @db.VarChar(128)
+  version         Int                 @default(1)
+  deletedAt       DateTime?           @map("deleted_at") @db.DateTime(3)
+  family          Family              @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  baby            Baby                @relation(fields: [babyId], references: [id], onDelete: Restrict)
+  creator         User                @relation("RecordCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  assets          GrowthRecordAsset[]
+  createdAt       DateTime            @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@unique([creatorUserId, clientRequestId])
+  @@index([babyId, status, occurredAt, id])
+  @@index([familyId, status, updatedAt])
+  @@map("growth_records")
+}
+
+model MediaAsset {
+  id              String             @id @db.Char(26)
+  familyId        String             @map("family_id") @db.Char(26)
+  babyId          String             @map("baby_id") @db.Char(26)
+  uploaderUserId  String             @map("uploader_user_id") @db.Char(26)
+  category        MediaCategory      @default(IMAGE)
+  objectKey       String             @unique @map("object_key") @db.VarChar(512)
+  mimeType        String             @map("mime_type") @db.VarChar(128)
+  sizeBytes       BigInt             @map("size_bytes") @db.UnsignedBigInt
+  sha256          String?            @db.Char(64)
+  width           Int?
+  height          Int?
+  durationMs      Int?               @map("duration_ms")
+  status          MediaStatus        @default(PENDING)
+  uploadedAt      DateTime?          @map("uploaded_at") @db.DateTime(3)
+  intentExpiresAt DateTime?          @map("intent_expires_at") @db.DateTime(3)
+  family          Family             @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  baby            Baby               @relation(fields: [babyId], references: [id], onDelete: Restrict)
+  uploader        User               @relation("MediaUploader", fields: [uploaderUserId], references: [id], onDelete: Restrict)
+  recordAsset     GrowthRecordAsset?
+  createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([familyId, status, createdAt])
+  @@index([uploaderUserId, status])
+  @@map("media_assets")
+}
+
+model GrowthRecordAsset {
+  growthRecordId String       @map("growth_record_id") @db.Char(26)
+  mediaAssetId   String       @unique @map("media_asset_id") @db.Char(26)
+  sortOrder      Int          @default(0) @map("sort_order")
+  growthRecord   GrowthRecord @relation(fields: [growthRecordId], references: [id], onDelete: Restrict)
+  mediaAsset     MediaAsset   @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@id([growthRecordId, mediaAssetId])
+  @@index([growthRecordId, sortOrder])
+  @@map("growth_record_assets")
+}
+
+model AuditLog {
+  id             String      @id @db.Char(26)
+  familyId       String      @map("family_id") @db.Char(26)
+  operatorUserId String      @map("operator_user_id") @db.Char(26)
+  action         String      @db.VarChar(64)
+  targetType     String      @map("target_type") @db.VarChar(64)
+  targetId       String      @map("target_id") @db.Char(26)
+  result         AuditResult
+  requestId      String      @map("request_id") @db.VarChar(64)
+  metadataJson   Json?       @map("metadata_json")
+  family         Family      @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  operator       User        @relation("AuditOperator", fields: [operatorUserId], references: [id], onDelete: Restrict)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@index([familyId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([requestId])
+  @@map("audit_logs")
+}
