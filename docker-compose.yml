@@ -12,8 +12,9 @@ services:
       MYSQL_USER: baby_companion
       MYSQL_PASSWORD: local_dev_password
       MYSQL_ROOT_PASSWORD: local_root_password
-      TZ: Asia/Shanghai
+      TZ: UTC
     command:
+      - "--default-time-zone=+00:00"
       - "--character-set-server=utf8mb4"
       - "--collation-server=utf8mb4_0900_ai_ci"
     volumes:

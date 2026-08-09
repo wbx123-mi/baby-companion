@@ -54,6 +54,11 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 curl http://127.0.0.1:3000/api/v1/health/ready
 ```
 
+## 时间与重置策略
+
+- MySQL 与 API 统一以 UTC 保存时间；小程序展示时按宝宝的 `Asia/Shanghai` 时区转换。
+- 需要清空某个环境的业务数据时，先导入 `docker/mysql/reset-business-data.sql`，再导入 `apps/api/prisma/migrations/20260809000000_init/migration.sql`。该操作会删除用户、家庭、成长记录和媒体元数据，但不会删除 MySQL 数据卷。
+
 ## 当前网络边界
 
 - API 仅监听 `127.0.0.1:3000`，不对公网暴露。
