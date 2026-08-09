@@ -81,19 +81,27 @@ pnpm dev:api
 - Swagger：`http://localhost:3000/docs`
 - 健康检查：`http://localhost:3000/api/v1/health/ready`
 
-本地开发默认启用模拟微信身份。小程序读取 `apps/miniapp/.env`：
+小程序提供四个明确的运行模式。后端的 `/auth/dev-login` 仅在 `NODE_ENV=development` 时存在，生产环境不会开放。
 
-```dotenv
-VITE_API_BASE_URL=http://127.0.0.1:3000/api/v1
-VITE_USE_DEV_LOGIN=true
+| 命令 | API / 数据库 | 登录方式 | 使用场景 |
+| --- | --- | --- | --- |
+| `pnpm dev:miniapp:local-mock` | 本机 / 本地 MySQL | 模拟身份 | 日常界面和业务开发 |
+| `pnpm dev:miniapp:local-real` | 本机 / 本地 MySQL | 真实微信登录 | 不污染线上数据地验证 openid 流程 |
+| `pnpm dev:miniapp:remote-real` | SSH 隧道 / 线上 MySQL | 真实微信登录 | 联调线上服务；会写入线上数据 |
+| `pnpm build:miniapp:production` | 正式 HTTPS 域名 / 线上 MySQL | 真实微信登录 | 上传体验版和发布 |
+
+默认命令 `pnpm dev:miniapp` 等同于 `pnpm dev:miniapp:local-mock`。各模式使用 `apps/miniapp/.env.<mode>` 文件；这些文件只保存 API 地址和登录开关，绝不保存 AppSecret。
+
+使用 `remote-real` 前，先在另一个 Mac 终端保持 SSH 隧道运行：
+
+```bash
+ssh -N -L 13000:127.0.0.1:3000 ecs
 ```
-
-后端的 `/auth/dev-login` 仅在 `NODE_ENV=development` 时存在，生产环境不会开放。
 
 另开一个终端启动微信小程序构建监听：
 
 ```bash
-pnpm dev:miniapp
+pnpm dev:miniapp:local-mock
 ```
 
 然后使用微信开发者工具导入：
@@ -144,13 +152,13 @@ pnpm db:down          # 停止本项目 Docker 服务
 
 ## 接入真实微信登录
 
-在 `apps/api/.env` 配置小程序凭据：
+在 `apps/api/.env` 配置小程序凭据，以支持 `local-real`：
 
 ```dotenv
 WECHAT_APP_ID=你的小程序AppID
 WECHAT_APP_SECRET=你的小程序AppSecret
 ```
 
-同时将小程序的 `VITE_USE_DEV_LOGIN` 设为 `false`。AppSecret 只保存在后端，不能写入小程序代码或提交到 Git。
+使用 `pnpm dev:miniapp:local-real` 时会自动将 `VITE_USE_DEV_LOGIN` 设为 `false`。服务器的 `.env.production` 也需要填写同一组凭据，以支持 `remote-real` 和生产构建。AppSecret 只保存在后端，不能写入小程序代码或提交到 Git。
 
 微信开发者工具访问本机 API 时可继续使用 `127.0.0.1`；真机无法通过 `127.0.0.1` 访问电脑，需要改为局域网地址，正式体验版则应使用已备案且配置进微信后台的 HTTPS 域名。

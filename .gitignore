@@ -11,3 +11,7 @@ apps/api/src/generated/
 .env.*
 !.env.example
 !.env.production.example
+!apps/miniapp/.env.local-mock
+!apps/miniapp/.env.local-real
+!apps/miniapp/.env.remote-real
+!apps/miniapp/.env.production.example

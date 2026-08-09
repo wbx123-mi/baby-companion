@@ -6,9 +6,13 @@
   "description": "家庭私域宝宝成长陪伴微信小程序",
   "scripts": {
     "dev:h5": "uni",
-    "dev:mp-weixin": "uni -p mp-weixin",
+    "dev:mp-weixin": "pnpm dev:mp-weixin:local-mock",
+    "dev:mp-weixin:local-mock": "uni -p mp-weixin --mode local-mock",
+    "dev:mp-weixin:local-real": "uni -p mp-weixin --mode local-real",
+    "dev:mp-weixin:remote-real": "uni -p mp-weixin --mode remote-real",
     "build:h5": "uni build",
-    "build:mp-weixin": "uni build -p mp-weixin",
+    "build:mp-weixin": "pnpm build:mp-weixin:production",
+    "build:mp-weixin:production": "uni build -p mp-weixin --mode production",
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
