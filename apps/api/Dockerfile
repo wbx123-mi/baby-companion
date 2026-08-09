@@ -14,6 +14,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/api apps/api
 COPY packages/contracts packages/contracts
+ENV DATABASE_URL=mysql://placeholder:placeholder@mysql:3306/baby_companion
+ENV SHADOW_DATABASE_URL=mysql://placeholder:placeholder@mysql:3306/baby_companion_shadow
 RUN pnpm --filter @baby-companion/api build
 
 FROM node:22-bookworm-slim AS runtime
