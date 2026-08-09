@@ -48,7 +48,8 @@ docker save baby-companion-api:production | gzip | ssh ecs "gunzip | docker load
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.production.yml up -d
-docker compose --env-file .env.production -f docker-compose.production.yml run --rm api node_modules/.bin/prisma migrate deploy --config apps/api/prisma.config.ts
+# 首次部署：将版本化的初始 schema 导入空的生产数据库。
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T mysql sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot baby_companion' < apps/api/prisma/migrations/20260809000000_init/migration.sql
 docker compose --env-file .env.production -f docker-compose.production.yml ps
 curl http://127.0.0.1:3000/api/v1/health/ready
 ```
