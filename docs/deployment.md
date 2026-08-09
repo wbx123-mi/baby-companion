@@ -37,8 +37,17 @@ openssl rand -hex 32
 
 ## 启动与迁移
 
+先在本机构建并传输 API 镜像，避免在 2GiB ECS 上编译 Node.js：
+
 ```bash
-docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+docker build -f apps/api/Dockerfile -t baby-companion-api:production .
+docker save baby-companion-api:production | gzip | ssh ecs "gunzip | docker load"
+```
+
+然后在服务器项目目录执行：
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
 docker compose --env-file .env.production -f docker-compose.production.yml run --rm api node_modules/.bin/prisma migrate deploy --config apps/api/prisma.config.ts
 docker compose --env-file .env.production -f docker-compose.production.yml ps
 curl http://127.0.0.1:3000/api/v1/health/ready

@@ -2,9 +2,7 @@ name: baby-companion
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: baby-companion-api:production
     restart: unless-stopped
     env_file: ${ENV_FILE:-.env.production}
     depends_on:
