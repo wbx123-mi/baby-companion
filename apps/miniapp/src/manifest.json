@@ -1,12 +1,12 @@
 {
   "name": "Baby Companion",
-  "appid": "",
+  "appid": "wxb54ee243e1b32e26",
   "description": "家庭私域宝宝成长陪伴小程序",
   "versionName": "0.1.0",
   "versionCode": "10",
   "transformPx": false,
   "mp-weixin": {
-    "appid": "",
+    "appid": "wxb54ee243e1b32e26",
     "setting": {
       "urlCheck": false,
       "es6": true,
@@ -22,4 +22,3 @@
   },
   "vueVersion": "3"
 }
-
