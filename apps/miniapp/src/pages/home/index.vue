@@ -75,7 +75,10 @@ function openGrowth(): void {
     <template v-else-if="hasFamily">
       <view class="home-family surface-card">
         <view class="home-family__header">
-          <view class="home-family__avatar">👶🏻</view>
+          <view class="home-family__avatar">
+            <image v-if="store.baby?.avatarUrl" class="home-family__avatar-image" :src="store.baby.avatarUrl" mode="aspectFill" />
+            <text v-else>👶🏻</text>
+          </view>
           <view class="home-family__identity">
             <text class="home-family__name">{{ store.baby?.nickname }}</text>
             <text class="home-family__age">{{ calculateAgeText(store.baby?.birthDate || "") }}</text>
@@ -242,12 +245,18 @@ function openGrowth(): void {
     display: flex;
     width: 88rpx;
     height: 88rpx;
+    overflow: hidden;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     background: var(--color-primary-soft);
     font-size: 44rpx;
+  }
+
+  &__avatar-image {
+    width: 100%;
+    height: 100%;
   }
 
   &__identity {

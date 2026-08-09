@@ -1,13 +1,17 @@
 import type { BabyContract, FamilySummaryContract } from "@baby-companion/contracts";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { AppException } from "../common/app.exception";
+import { MediaService } from "../media/media.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { UpdateBabyDto } from "./dto/update-baby.dto";
 import type { UpdateFamilyDto } from "./dto/update-family.dto";
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService,
+  ) {}
 
   async updateFamily(userId: string, familyId: string, input: UpdateFamilyDto): Promise<FamilySummaryContract> {
     const membership = await this.prisma.familyMember.findFirst({ where: { userId, familyId, status: "ACTIVE", role: "ADMIN", family: { status: "ACTIVE" } }, select: { role: true } });
@@ -26,8 +30,24 @@ export class ProfilesService {
     const birthTime = input.birthTime ? new Date(`1970-01-01T${input.birthTime.length === 5 ? `${input.birthTime}:00` : input.birthTime}.000Z`) : null;
     const updated = await this.prisma.baby.updateMany({ where: { id: babyId, version: input.version }, data: { nickname: input.nickname.trim(), birthDate, birthTime, timezone: input.timezone, gender: input.gender, introduction: input.introduction?.trim() || null, version: { increment: 1 } } });
     if (updated.count !== 1) throw new AppException("BABY_VERSION_CONFLICT", "宝宝档案已被其他家人修改，请刷新后重试", HttpStatus.CONFLICT);
-    const result = await this.prisma.baby.findUniqueOrThrow({ where: { id: babyId } });
-    return { id: result.id, familyId: result.familyId, nickname: result.nickname, birthDate: this.formatDate(result.birthDate), birthTime: result.birthTime ? this.formatTime(result.birthTime) : null, timezone: result.timezone, gender: result.gender, introduction: result.introduction, version: result.version };
+    const result = await this.prisma.baby.findUniqueOrThrow({
+      where: { id: babyId },
+      include: { avatarAsset: { select: { objectKey: true, status: true } } },
+    });
+    return {
+      id: result.id,
+      familyId: result.familyId,
+      nickname: result.nickname,
+      avatarUrl: result.avatarAsset?.status === "READY"
+        ? await this.mediaService.getReadUrl(result.avatarAsset.objectKey)
+        : null,
+      birthDate: this.formatDate(result.birthDate),
+      birthTime: result.birthTime ? this.formatTime(result.birthTime) : null,
+      timezone: result.timezone,
+      gender: result.gender,
+      introduction: result.introduction,
+      version: result.version,
+    };
   }
 
   private formatDate(date: Date): string { return date.toISOString().slice(0, 10); }

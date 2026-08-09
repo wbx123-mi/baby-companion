@@ -75,6 +75,8 @@ enum GrowthRecordStatus {
 
 enum MediaCategory {
   IMAGE
+  USER_AVATAR
+  BABY_AVATAR
 }
 
 enum MediaStatus {
@@ -94,6 +96,7 @@ model User {
   id              String           @id @db.Char(26)
   nickname        String?          @db.VarChar(64)
   avatarUrl       String?          @map("avatar_url") @db.VarChar(512)
+  avatarAssetId   String?          @unique @map("avatar_asset_id") @db.Char(26)
   status          UserStatus       @default(ACTIVE)
   identities      UserIdentity[]
   sessions        AuthSession[]
@@ -103,6 +106,7 @@ model User {
   createdInvites  FamilyInvite[]    @relation("InviteCreator")
   growthRecords   GrowthRecord[]   @relation("RecordCreator")
   mediaAssets     MediaAsset[]     @relation("MediaUploader")
+  avatarAsset     MediaAsset?      @relation("UserAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   auditLogs       AuditLog[]       @relation("AuditOperator")
   createdAt       DateTime         @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt       DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
@@ -243,6 +247,7 @@ model Baby {
   id           String         @id @db.Char(26)
   familyId     String         @map("family_id") @db.Char(26)
   nickname     String         @db.VarChar(64)
+  avatarAssetId String?       @unique @map("avatar_asset_id") @db.Char(26)
   birthDate    DateTime       @map("birth_date") @db.Date
   birthTime    DateTime?      @map("birth_time") @db.Time(0)
   timezone     String         @default("Asia/Shanghai") @db.VarChar(64)
@@ -253,6 +258,7 @@ model Baby {
   family       Family         @relation(fields: [familyId], references: [id], onDelete: Restrict)
   records      GrowthRecord[]
   mediaAssets  MediaAsset[]
+  avatarAsset  MediaAsset?    @relation("BabyAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   createdAt    DateTime       @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.DateTime(3)
 
@@ -304,6 +310,8 @@ model MediaAsset {
   family          Family             @relation(fields: [familyId], references: [id], onDelete: Restrict)
   baby            Baby               @relation(fields: [babyId], references: [id], onDelete: Restrict)
   uploader        User               @relation("MediaUploader", fields: [uploaderUserId], references: [id], onDelete: Restrict)
+  userAvatar      User?              @relation("UserAvatar")
+  babyAvatar      Baby?              @relation("BabyAvatar")
   recordAsset     GrowthRecordAsset?
   createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(3)

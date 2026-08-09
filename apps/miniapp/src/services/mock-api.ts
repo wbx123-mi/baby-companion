@@ -208,6 +208,7 @@ export const mockApi = {
       id: babyId,
       familyId,
       nickname: input.babyNickname.trim(),
+      avatarUrl: null,
       birthDate: input.birthDate,
       birthTime: input.birthTime,
       timezone: "Asia/Shanghai",

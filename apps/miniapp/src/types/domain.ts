@@ -34,6 +34,7 @@ export interface Baby {
   id: string;
   familyId: string;
   nickname: string;
+  avatarUrl: string | null;
   birthDate: string;
   birthTime: string | null;
   timezone: string;

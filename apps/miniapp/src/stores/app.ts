@@ -103,6 +103,14 @@ export const useAppStore = defineStore("app", () => {
     if (bootstrapData.value) bootstrapData.value.user.nickname = nickname;
   }
 
+  function setCurrentUserAvatar(avatarUrl: string): void {
+    if (bootstrapData.value) bootstrapData.value.user.avatarUrl = avatarUrl;
+  }
+
+  function setCurrentBabyAvatar(avatarUrl: string): void {
+    if (bootstrapData.value?.baby) bootstrapData.value.baby.avatarUrl = avatarUrl;
+  }
+
   function setDarkMode(enabled: boolean): void {
     darkMode.value = enabled;
     uni.setStorageSync(THEME_KEY, enabled);
@@ -134,6 +142,8 @@ export const useAppStore = defineStore("app", () => {
     saveFamily,
     setBootstrapData,
     setCurrentUserNickname,
+    setCurrentUserAvatar,
+    setCurrentBabyAvatar,
     setFilters,
     setDarkMode,
     resetDemo,

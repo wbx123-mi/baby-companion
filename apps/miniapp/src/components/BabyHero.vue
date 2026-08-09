@@ -15,7 +15,10 @@ defineEmits<{
   <view class="baby-hero" @click="$emit('open-profile')">
     <view class="baby-hero__glow">🌙</view>
     <view class="baby-hero__top">
-      <view class="baby-hero__avatar">👶🏻</view>
+      <view class="baby-hero__avatar">
+        <image v-if="baby.avatarUrl" class="baby-hero__avatar-image" :src="baby.avatarUrl" mode="aspectFill" />
+        <text v-else>👶🏻</text>
+      </view>
       <view class="baby-hero__identity">
         <view class="baby-hero__name-row">
           <text class="baby-hero__name">{{ baby.nickname }}</text>
@@ -62,6 +65,7 @@ defineEmits<{
     display: flex;
     width: 100rpx;
     height: 100rpx;
+    overflow: hidden;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
@@ -70,6 +74,11 @@ defineEmits<{
     background: var(--color-primary-soft);
     font-size: 50rpx;
     box-shadow: var(--shadow-card);
+  }
+
+  &__avatar-image {
+    width: 100%;
+    height: 100%;
   }
 
   &__identity {

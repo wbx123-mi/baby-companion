@@ -157,7 +157,7 @@ export class RecordsService {
     createdAt: Date;
     updatedAt: Date;
     creator: { id: string; nickname: string | null; avatarUrl: string | null };
-    assets: Array<{ sortOrder: number; mediaAsset: { id: string; category: "IMAGE"; width: number | null; height: number | null; status: string; objectKey: string } }>;
+    assets: Array<{ sortOrder: number; mediaAsset: { id: string; category: string; width: number | null; height: number | null; status: string; objectKey: string } }>;
   }): Promise<GrowthRecordContract> {
     return {
       id: record.id,
@@ -169,7 +169,7 @@ export class RecordsService {
       creator: record.creator,
       assets: await Promise.all(record.assets.map(async (asset) => ({
         id: asset.mediaAsset.id,
-        category: asset.mediaAsset.category,
+        category: "IMAGE",
         width: asset.mediaAsset.width || 0,
         height: asset.mediaAsset.height || 0,
         status: "READY",
@@ -186,7 +186,7 @@ export class RecordsService {
     const uniqueIds = [...new Set(assetIds)];
     if (uniqueIds.length > 9) throw new AppException("RECORD_ASSET_LIMIT", "最多上传 9 张照片", HttpStatus.BAD_REQUEST);
     if (uniqueIds.length) {
-      const assets = await this.prisma.mediaAsset.findMany({ where: { id: { in: uniqueIds }, familyId, babyId, uploaderUserId: userId, status: "READY" }, select: { id: true } });
+      const assets = await this.prisma.mediaAsset.findMany({ where: { id: { in: uniqueIds }, familyId, babyId, uploaderUserId: userId, category: "IMAGE", status: "READY" }, select: { id: true } });
       if (assets.length !== uniqueIds.length) throw new AppException("RECORD_ASSET_INVALID", "存在无效或未完成上传的照片", HttpStatus.BAD_REQUEST);
     }
     await this.prisma.$transaction([

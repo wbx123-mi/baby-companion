@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { useMessage } from "wot-design-uni/components/wd-message-box/index";
 import { authApi } from "@/api/auth-api";
+import { mediaApi } from "@/api/media-api";
 import { useAppStore } from "@/stores/app";
 import { calculateAgeText } from "@/utils/date";
 
@@ -16,6 +17,7 @@ const babyName = computed(() => store.baby?.nickname || "宝宝");
 const nicknameVisible = ref(false);
 const nicknameInput = ref("");
 const nicknameSaving = ref(false);
+const avatarUploading = ref(false);
 
 onShow(() => {
   void store.bootstrap();
@@ -50,6 +52,27 @@ async function saveNickname(): Promise<void> {
     uni.showToast({ title: error instanceof Error ? error.message : "保存失败", icon: "none" });
   } finally {
     nicknameSaving.value = false;
+  }
+}
+
+async function changeAvatar(): Promise<void> {
+  if (!store.baby) {
+    uni.showToast({ title: "加入家庭后才可以设置头像", icon: "none" });
+    return;
+  }
+  try {
+    const { tempFilePaths } = await uni.chooseImage({ count: 1, sizeType: ["compressed"], sourceType: ["album", "camera"] });
+    const filePath = tempFilePaths[0];
+    if (!filePath) return;
+    avatarUploading.value = true;
+    const { avatarUrl } = await mediaApi.uploadAvatar(store.baby.id, "USER", filePath);
+    store.setCurrentUserAvatar(avatarUrl);
+    uni.showToast({ title: "头像已更新", icon: "success" });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("cancel")) return;
+    uni.showToast({ title: error instanceof Error ? error.message : "头像上传失败", icon: "none" });
+  } finally {
+    avatarUploading.value = false;
   }
 }
 
@@ -98,7 +121,11 @@ async function resetDemo(): Promise<void> {
 <template>
   <view :class="['page-shell', 'mine-page', store.themeClass]">
     <view class="mine-page__user-card">
-      <view class="mine-page__avatar">🙋🏻‍♂️</view>
+      <view class="mine-page__avatar" @click="changeAvatar">
+        <image v-if="store.user?.avatarUrl" class="mine-page__avatar-image" :src="store.user.avatarUrl" mode="aspectFill" />
+        <text v-else>🙋🏻‍♂️</text>
+        <text class="mine-page__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
+      </view>
       <view class="mine-page__identity">
         <text class="mine-page__name">{{ displayName }}</text>
         <text class="mine-page__role">
@@ -217,7 +244,9 @@ async function resetDemo(): Promise<void> {
   }
 
   &__avatar {
+    position: relative;
     display: flex;
+    overflow: hidden;
     width: 104rpx;
     height: 104rpx;
     align-items: center;
@@ -226,6 +255,24 @@ async function resetDemo(): Promise<void> {
     border-radius: 50%;
     background: var(--color-primary-soft);
     font-size: 48rpx;
+  }
+
+  &__avatar-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__avatar-action {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 4rpx 0;
+    color: var(--color-surface);
+    background: var(--color-overlay);
+    font-size: 18rpx;
+    line-height: 1.2;
+    text-align: center;
   }
 
   &__identity {

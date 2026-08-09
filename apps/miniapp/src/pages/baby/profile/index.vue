@@ -2,11 +2,13 @@
 import { reactive, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useAppStore } from "@/stores/app";
+import { mediaApi } from "@/api/media-api";
 import type { Gender } from "@/types/domain";
 import { toDateValue } from "@/utils/date";
 
 const store = useAppStore();
 const saving = ref(false);
+const avatarUploading = ref(false);
 const form = reactive({
   nickname: "",
   birthDate: Date.now(),
@@ -53,12 +55,35 @@ async function submit(): Promise<void> {
     saving.value = false;
   }
 }
+
+async function changeAvatar(): Promise<void> {
+  const baby = store.baby;
+  if (!baby) return;
+  try {
+    const { tempFilePaths } = await uni.chooseImage({ count: 1, sizeType: ["compressed"], sourceType: ["album", "camera"] });
+    const filePath = tempFilePaths[0];
+    if (!filePath) return;
+    avatarUploading.value = true;
+    const { avatarUrl } = await mediaApi.uploadAvatar(baby.id, "BABY", filePath);
+    store.setCurrentBabyAvatar(avatarUrl);
+    uni.showToast({ title: "头像已更新", icon: "success" });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("cancel")) return;
+    uni.showToast({ title: error instanceof Error ? error.message : "头像上传失败", icon: "none" });
+  } finally {
+    avatarUploading.value = false;
+  }
+}
 </script>
 
 <template>
   <view :class="['page-shell', 'baby-profile', store.themeClass]">
     <view class="baby-profile__avatar-card">
-      <view class="baby-profile__avatar">👶🏻</view>
+      <view class="baby-profile__avatar" @click="changeAvatar">
+        <image v-if="store.baby?.avatarUrl" class="baby-profile__avatar-image" :src="store.baby.avatarUrl" mode="aspectFill" />
+        <text v-else>👶🏻</text>
+        <text class="baby-profile__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
+      </view>
       <text class="baby-profile__name">{{ form.nickname || "宝宝" }}</text>
       <text class="baby-profile__hint">这些信息会用来计算成长天数</text>
     </view>
@@ -118,7 +143,9 @@ async function submit(): Promise<void> {
   }
 
   &__avatar {
+    position: relative;
     display: flex;
+    overflow: hidden;
     width: 116rpx;
     height: 116rpx;
     align-items: center;
@@ -127,6 +154,24 @@ async function submit(): Promise<void> {
     border-radius: 50%;
     background: var(--color-primary-soft);
     font-size: 58rpx;
+  }
+
+  &__avatar-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__avatar-action {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5rpx 0;
+    color: var(--color-surface);
+    background: var(--color-overlay);
+    font-size: 18rpx;
+    line-height: 1.2;
+    text-align: center;
   }
 
   &__name {

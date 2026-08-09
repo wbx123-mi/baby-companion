@@ -26,6 +26,7 @@ const seedDatabase: MockDatabase = {
     id: "baby_mock_xiaoman",
     familyId: "fam_mock_home",
     nickname: "小满",
+    avatarUrl: null,
     birthDate: "2026-07-30",
     birthTime: "08:26:00",
     timezone: "Asia/Shanghai",
