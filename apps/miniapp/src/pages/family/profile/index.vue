@@ -89,7 +89,7 @@ async function submit(): Promise<void> {
     </view>
 
     <view class="surface-card family-profile__form">
-      <wd-input v-model="familyName" label="家庭名称" placeholder="例如：小满的家" required clearable />
+      <wd-input v-model="familyName" label="家庭名称" placeholder="例如：宝宝的家" required clearable />
       <wd-cell title="我的角色" :value="store.family?.role === 'ADMIN' ? '管理员' : '家庭成员'" />
       <wd-cell title="家庭成员" :value="membersLoading ? '加载中…' : `${members.length} 人`" />
     </view>

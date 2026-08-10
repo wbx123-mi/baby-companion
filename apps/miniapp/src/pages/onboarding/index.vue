@@ -59,7 +59,7 @@ async function submit(): Promise<void> {
 
     <view class="surface-card onboarding-page__form">
       <wd-input v-model="form.familyName" label="家庭名称" required clearable />
-      <wd-input v-model="form.babyNickname" label="宝宝昵称" placeholder="例如：小满" required clearable />
+      <wd-input v-model="form.babyNickname" label="宝宝昵称" placeholder="例如：宝宝" required clearable />
       <wd-datetime-picker
         v-model="form.birthDate"
         type="date"

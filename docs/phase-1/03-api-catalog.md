@@ -247,7 +247,7 @@ Access Token 中的 `sid` 标识当前设备会话。退出登录只撤销该 `s
     "name": "宝宝的小家"
   },
   "baby": {
-    "nickname": "小满",
+    "nickname": "宝宝",
     "birthDate": "2026-07-30",
     "birthTime": "08:26:00",
     "timezone": "Asia/Shanghai",
@@ -269,7 +269,7 @@ Access Token 中的 `sid` 标识当前设备会话。退出登录只撤销该 `s
 
 ```json
 {
-  "nickname": "小满满",
+  "nickname": "宝宝",
   "birthDate": "2026-07-30",
   "birthTime": "08:26:00",
   "timezone": "Asia/Shanghai",

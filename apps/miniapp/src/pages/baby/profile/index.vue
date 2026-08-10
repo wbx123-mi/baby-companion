@@ -84,12 +84,12 @@ async function changeAvatar(): Promise<void> {
         <text v-else>👶🏻</text>
         <text class="baby-profile__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
       </view>
+      <text class="baby-profile__avatar-hint">点击头像更换，选择后自动保存</text>
       <text class="baby-profile__name">{{ form.nickname || "宝宝" }}</text>
-      <text class="baby-profile__hint">这些信息会用来计算成长天数</text>
     </view>
 
     <view class="surface-card baby-profile__form">
-      <wd-input v-model="form.nickname" label="宝宝昵称" placeholder="例如：小满" required clearable />
+      <wd-input v-model="form.nickname" label="宝宝昵称" placeholder="例如：宝宝" required clearable />
       <wd-datetime-picker
         v-model="form.birthDate"
         type="date"
@@ -174,16 +174,16 @@ async function changeAvatar(): Promise<void> {
     text-align: center;
   }
 
+  &__avatar-hint {
+    margin-top: 10rpx;
+    color: var(--color-text-secondary);
+    font-size: 21rpx;
+  }
+
   &__name {
     margin-top: 16rpx;
     font-size: 34rpx;
     font-weight: 800;
-  }
-
-  &__hint {
-    margin-top: 4rpx;
-    color: var(--color-text-secondary);
-    font-size: 22rpx;
   }
 
   &__form {

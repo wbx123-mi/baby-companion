@@ -14,7 +14,7 @@ const seedDatabase: MockDatabase = {
   families: [
     {
       id: "fam_mock_home",
-      name: "小满的家",
+      name: "宝宝的家",
       ownerUserId: "usr_mock_uncle",
       role: "ADMIN",
       status: "ACTIVE",
@@ -25,7 +25,7 @@ const seedDatabase: MockDatabase = {
   baby: {
     id: "baby_mock_xiaoman",
     familyId: "fam_mock_home",
-    nickname: "小满",
+    nickname: "宝宝",
     avatarUrl: null,
     birthDate: "2026-07-30",
     birthTime: "08:26:00",
@@ -124,7 +124,7 @@ const seedDatabase: MockDatabase = {
       familyId: "fam_mock_home",
       babyId: "baby_mock_xiaoman",
       type: "FIRST",
-      content: "小满出生啦，平安健康，第一次和大家见面。",
+      content: "宝宝出生啦，平安健康，第一次和大家见面。",
       occurredAt: "2026-07-30T00:26:00.000Z",
       creator: { id: "usr_mock_uncle", nickname: "小舅舅", avatarUrl: null },
       assets: [],

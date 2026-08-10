@@ -27,7 +27,7 @@ onMounted(async () => {
     <view class="launch-page__halo">
       <view class="launch-page__mark">👶🏻</view>
     </view>
-    <text class="launch-page__title">小满的成长簿</text>
+    <text class="launch-page__title">宝宝的成长簿</text>
     <text class="launch-page__subtitle">把爱藏进每一个平常日子</text>
     <view class="launch-page__loading">
       <wd-loading size="22px" color="var(--color-primary)" />
