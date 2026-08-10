@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import { useMessage } from "wot-design-uni/components/wd-message-box/index";
 import { recordsApi } from "@/api/records-api";
+import MediaGallery from "@/components/MediaGallery.vue";
 import { getRecordTypeEmoji, getRecordTypeLabel } from "@/constants/records";
 import { useAppStore } from "@/stores/app";
 import type { GrowthRecord } from "@/types/domain";
@@ -87,6 +88,8 @@ function goBack(): void {
         </view>
         <view class="record-detail__more" @click="showActions = true">···</view>
       </view>
+
+      <MediaGallery v-if="record.assets.length" :assets="record.assets" previewable />
 
       <view class="surface-card record-detail__story">
         <text class="record-detail__text">{{ record.content }}</text>

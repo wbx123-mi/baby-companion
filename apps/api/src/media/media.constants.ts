@@ -1,0 +1,4 @@
+export const RECORD_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const RECORD_IMAGE_MAX_EDGE = 1920;
+export const AVATAR_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+export const AVATAR_IMAGE_MAX_EDGE = 512;

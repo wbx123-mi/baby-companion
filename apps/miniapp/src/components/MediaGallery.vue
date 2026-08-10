@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { MediaAsset } from "@/types/domain";
 
-defineProps<{
+withDefaults(defineProps<{
   assets: MediaAsset[];
   compact?: boolean;
-}>();
+  previewable?: boolean;
+}>(), {
+  compact: false,
+  previewable: true,
+});
 
 function preview(asset: MediaAsset, assets: MediaAsset[]): void {
   const urls = assets.map((item) => item.localPath || item.url).filter(Boolean) as string[];
@@ -20,7 +24,7 @@ function preview(asset: MediaAsset, assets: MediaAsset[]): void {
       v-for="asset in assets.slice(0, compact ? 1 : 9)"
       :key="asset.id"
       :class="['media-gallery__item', `media-gallery__item--${asset.mockTheme || 'local'}`]"
-      @click.stop="preview(asset, assets)"
+      @click="previewable && preview(asset, assets)"
     >
       <wd-img
         v-if="asset.localPath || asset.url"

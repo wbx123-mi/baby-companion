@@ -16,32 +16,34 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <wd-card custom-class="growth-record-card" @click="emit('open', record.id)">
-    <template #title>
-      <view class="record-card__header">
-        <view class="record-card__identity">
-          <view class="record-card__avatar">{{ getRecordTypeEmoji(record.type) }}</view>
-          <view class="record-card__heading">
-            <text class="record-card__type">{{ getRecordTypeLabel(record.type) }}</text>
-            <text class="record-card__meta">
-              {{ formatRecordTime(record.occurredAt) }} · {{ calculateAgeText(birthDate, record.occurredAt) }}
-            </text>
+  <view class="record-card__tap" @click="emit('open', record.id)">
+    <wd-card custom-class="growth-record-card">
+      <template #title>
+        <view class="record-card__header">
+          <view class="record-card__identity">
+            <view class="record-card__avatar">{{ getRecordTypeEmoji(record.type) }}</view>
+            <view class="record-card__heading">
+              <text class="record-card__type">{{ getRecordTypeLabel(record.type) }}</text>
+              <text class="record-card__meta">
+                {{ formatRecordTime(record.occurredAt) }} · {{ calculateAgeText(birthDate, record.occurredAt) }}
+              </text>
+            </view>
           </view>
+          <view class="record-card__more" @click.stop="emit('more', record)">···</view>
         </view>
-        <view class="record-card__more" @click.stop="emit('more', record)">···</view>
-      </view>
-    </template>
+      </template>
 
-    <text class="record-card__content">{{ record.content }}</text>
-    <MediaGallery :assets="record.assets" compact />
+      <text class="record-card__content">{{ record.content }}</text>
+      <MediaGallery :assets="record.assets" compact :previewable="false" />
 
-    <template #footer>
-      <view class="record-card__footer">
-        <text>{{ record.creator.nickname }}记录</text>
-        <text>查看详情 ›</text>
-      </view>
-    </template>
-  </wd-card>
+      <template #footer>
+        <view class="record-card__footer">
+          <text>{{ record.creator.nickname }}记录</text>
+          <text>查看详情 ›</text>
+        </view>
+      </template>
+    </wd-card>
+  </view>
 </template>
 
 <style lang="scss">
@@ -54,6 +56,10 @@ const emit = defineEmits<{
 }
 
 .record-card {
+  &__tap {
+    display: block;
+  }
+
   &__header,
   &__identity,
   &__footer {

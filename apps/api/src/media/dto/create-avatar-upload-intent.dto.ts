@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsIn, IsInt, IsString, Max, MaxLength, Min } from "class-validator";
+import { AVATAR_IMAGE_MAX_BYTES, AVATAR_IMAGE_MAX_EDGE } from "../media.constants";
 
 export class CreateAvatarUploadIntentDto {
   @ApiProperty()
@@ -15,21 +16,21 @@ export class CreateAvatarUploadIntentDto {
   @IsIn(["image/jpeg", "image/png", "image/webp"])
   mimeType!: "image/jpeg" | "image/png" | "image/webp";
 
-  @ApiProperty({ maximum: 10485760 })
+  @ApiProperty({ maximum: AVATAR_IMAGE_MAX_BYTES })
   @IsInt()
   @Min(1)
-  @Max(10 * 1024 * 1024)
+  @Max(AVATAR_IMAGE_MAX_BYTES)
   sizeBytes!: number;
 
   @ApiProperty()
   @IsInt()
   @Min(1)
-  @Max(10000)
+  @Max(AVATAR_IMAGE_MAX_EDGE)
   width!: number;
 
   @ApiProperty()
   @IsInt()
   @Min(1)
-  @Max(10000)
+  @Max(AVATAR_IMAGE_MAX_EDGE)
   height!: number;
 }

@@ -92,7 +92,11 @@ function chooseImages(): void {
       uni.showLoading({ title: "正在上传照片" });
       try {
         const paths = Array.isArray(tempFilePaths) ? tempFilePaths : [tempFilePaths];
-        const uploaded = await Promise.all(paths.map((filePath) => mediaApi.uploadImage(store.baby!.id, filePath)));
+        const uploaded: MediaAsset[] = [];
+        for (let index = 0; index < paths.length; index += 1) {
+          uni.showLoading({ title: `处理照片 ${index + 1}/${paths.length}` });
+          uploaded.push(await mediaApi.uploadImage(store.baby.id, paths[index]));
+        }
         form.assets.push(...uploaded);
       } catch (error) {
         uni.showToast({ title: error instanceof Error ? error.message : "图片上传失败", icon: "none" });

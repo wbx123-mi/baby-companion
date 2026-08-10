@@ -8,6 +8,7 @@ import { AppException } from "../common/app.exception";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateAvatarUploadIntentDto } from "./dto/create-avatar-upload-intent.dto";
 import type { CreateUploadIntentDto } from "./dto/create-upload-intent.dto";
+import { AVATAR_IMAGE_MAX_BYTES, RECORD_IMAGE_MAX_BYTES } from "./media.constants";
 
 @Injectable()
 export class MediaService {
@@ -49,7 +50,7 @@ export class MediaService {
       Bucket: this.bucket,
       Key: objectKey,
       Fields: { "Content-Type": input.mimeType },
-      Conditions: [["content-length-range", 1, 10 * 1024 * 1024], ["eq", "$Content-Type", input.mimeType]],
+      Conditions: [["content-length-range", 1, RECORD_IMAGE_MAX_BYTES], ["eq", "$Content-Type", input.mimeType]],
       Expires: 600,
     });
     return { assetId: asset.id, uploadUrl: upload.url, formData: upload.fields };
@@ -87,7 +88,7 @@ export class MediaService {
       Bucket: this.bucket,
       Key: objectKey,
       Fields: { "Content-Type": input.mimeType },
-      Conditions: [["content-length-range", 1, 10 * 1024 * 1024], ["eq", "$Content-Type", input.mimeType]],
+      Conditions: [["content-length-range", 1, AVATAR_IMAGE_MAX_BYTES], ["eq", "$Content-Type", input.mimeType]],
       Expires: 600,
     });
     return { assetId: asset.id, uploadUrl: upload.url, formData: upload.fields };
