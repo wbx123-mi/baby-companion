@@ -44,7 +44,15 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-hero);
+  background-color: var(--color-bg);
+  background-image: url("/static/journal/bg-page.webp");
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% 100%;
+
+  &.wot-theme-dark {
+    background-image: none;
+  }
 
   &__halo {
     display: flex;

@@ -121,9 +121,10 @@ async function resetDemo(): Promise<void> {
 <template>
   <view :class="['page-shell', 'mine-page', store.themeClass]">
     <view class="mine-page__user-card">
+      <image class="mine-page__tape" src="/static/journal/icon_35.webp" mode="aspectFit" />
       <view class="mine-page__avatar" @click="changeAvatar">
         <image v-if="store.user?.avatarUrl" class="mine-page__avatar-image" :src="store.user.avatarUrl" mode="aspectFill" />
-        <text v-else>🙋🏻‍♂️</text>
+        <image v-else class="mine-page__avatar-placeholder" src="/static/journal/icon_47.webp" mode="aspectFit" />
         <text class="mine-page__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
       </view>
       <view class="mine-page__identity">
@@ -134,17 +135,11 @@ async function resetDemo(): Promise<void> {
       </view>
       <view class="mine-page__badge">体验版</view>
     </view>
-
-    <view v-if="store.baby" class="mine-page__baby-note">
-      <text>👶🏻 {{ store.baby.nickname }}</text>
-      <text>{{ calculateAgeText(store.baby.birthDate) }}</text>
-    </view>
-
     <view class="mine-page__group">
       <text class="section-title">个人</text>
       <wd-cell-group border custom-class="mine-cell-group">
         <wd-cell title="家庭昵称" :value="displayName" label="家人看到你的称呼" clickable is-link @click="openNicknameEditor">
-          <template #icon><text class="mine-page__cell-icon">🙋🏻</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_52.webp" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>
@@ -161,7 +156,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="navigate('/pages/baby/profile/index')"
         >
-          <template #icon><text class="mine-page__cell-icon">👶🏻</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_01.webp" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="store.family"
@@ -172,7 +167,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="navigate('/pages/family/profile/index')"
         >
-          <template #icon><text class="mine-page__cell-icon">🏠</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_02.webp" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="!store.family"
@@ -182,7 +177,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="goHome"
         >
-          <template #icon><text class="mine-page__cell-icon">🏠</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_02.webp" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>
@@ -191,13 +186,13 @@ async function resetDemo(): Promise<void> {
       <text class="section-title">偏好与开发</text>
       <wd-cell-group border custom-class="mine-cell-group">
         <wd-cell title="深色模式" label="跟着此项目独立保存">
-          <template #icon><text class="mine-page__cell-icon">🌙</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_21.webp" mode="aspectFit" /></template>
           <template #value>
             <wd-switch :model-value="store.darkMode" @update:model-value="store.setDarkMode" />
           </template>
         </wd-cell>
         <wd-cell title="Mock 数据" value="恢复初始内容" clickable is-link @click="resetDemo">
-          <template #icon><text class="mine-page__cell-icon">🧪</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_24.webp" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="authApi.isDevelopmentLoginEnabled"
@@ -208,10 +203,10 @@ async function resetDemo(): Promise<void> {
           is-link
           @click="switchDevelopmentIdentity"
         >
-          <template #icon><text class="mine-page__cell-icon">🔁</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_23.webp" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell title="当前版本" value="0.2.0 · Hybrid API">
-          <template #icon><text class="mine-page__cell-icon">🧩</text></template>
+          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_20.webp" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>
@@ -232,15 +227,27 @@ async function resetDemo(): Promise<void> {
 </template>
 
 <style lang="scss">
+
 .mine-page {
   &__user-card {
+    position: relative;
     display: flex;
-    padding: 34rpx;
+    margin: 14rpx 8rpx 0;
+    padding: 46rpx 34rpx 34rpx;
     align-items: center;
-    border: 1rpx solid var(--color-border);
-    border-radius: 32rpx;
-    background: var(--gradient-hero);
-    box-shadow: var(--shadow-card);
+    border: 1rpx solid rgba(165, 139, 117, 0.2);
+    border-radius: 18rpx;
+    background: rgba(255, 252, 246, 0.92);
+    box-shadow: 0 10rpx 24rpx rgba(112, 84, 64, 0.1);
+  }
+
+  &__tape {
+    position: absolute;
+    top: -34rpx;
+    left: 28rpx;
+    width: 128rpx;
+    height: 70rpx;
+    transform: rotate(-12deg);
   }
 
   &__avatar {
@@ -258,6 +265,11 @@ async function resetDemo(): Promise<void> {
   }
 
   &__avatar-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__avatar-placeholder {
     width: 100%;
     height: 100%;
   }
@@ -284,7 +296,8 @@ async function resetDemo(): Promise<void> {
   }
 
   &__name {
-    font-size: 36rpx;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 38rpx;
     font-weight: 800;
   }
 
@@ -302,15 +315,15 @@ async function resetDemo(): Promise<void> {
     font-size: 20rpx;
   }
 
-  &__baby-note {
+  &__baby-identity {
     display: flex;
-    margin-top: 20rpx;
-    padding: 20rpx 26rpx;
-    justify-content: space-between;
-    border-radius: 20rpx;
-    color: var(--color-text-secondary);
-    background: var(--color-surface);
-    font-size: 24rpx;
+    align-items: center;
+  }
+
+  &__baby-icon {
+    width: 46rpx;
+    height: 46rpx;
+    margin-right: 10rpx;
   }
 
   &__group {
@@ -318,8 +331,9 @@ async function resetDemo(): Promise<void> {
   }
 
   &__cell-icon {
+    width: 54rpx;
+    height: 54rpx;
     margin-right: 18rpx;
-    font-size: 32rpx;
   }
 
   &__footer {
@@ -356,8 +370,15 @@ async function resetDemo(): Promise<void> {
 
 .mine-cell-group {
   overflow: hidden !important;
-  border-radius: 26rpx !important;
-  background: var(--color-surface) !important;
-  box-shadow: var(--shadow-card) !important;
+  border: 1rpx solid rgba(165, 139, 117, 0.18) !important;
+  border-radius: 18rpx !important;
+  background: rgba(255, 252, 246, 0.9) !important;
+  box-shadow: 0 8rpx 22rpx rgba(112, 84, 64, 0.09) !important;
+}
+
+.mine-page .section-title {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-size: 28rpx;
+  letter-spacing: 3rpx;
 }
 </style>

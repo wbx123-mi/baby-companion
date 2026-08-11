@@ -6,6 +6,7 @@ apps/api/src/generated/
 .idea/
 .vscode/
 .DS_Store
+.local-assets/
 *.log
 .env
 .env.*

@@ -43,7 +43,7 @@ export function calculateAgeText(birthDate: string, targetIso = new Date().toISO
   const diffDays = Math.max(0, Math.floor((target.getTime() - birth.getTime()) / 86_400_000));
 
   if (diffDays < 30) {
-    return `出生第 ${diffDays + 1} 天`;
+    return `第 ${diffDays + 1} 天`;
   }
 
   const months = Math.floor(diffDays / 30);

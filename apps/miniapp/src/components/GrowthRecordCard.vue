@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getRecordTypeEmoji, getRecordTypeLabel } from "@/constants/records";
-import type { GrowthRecord } from "@/types/domain";
+import { getRecordTypeLabel } from "@/constants/records";
+import type { GrowthRecord, RecordType } from "@/types/domain";
 import { calculateAgeText, formatRecordTime } from "@/utils/date";
 import MediaGallery from "./MediaGallery.vue";
 
@@ -13,6 +13,13 @@ const emit = defineEmits<{
   (event: "open", recordId: string): void;
   (event: "more", record: GrowthRecord): void;
 }>();
+
+const recordTypeIcons: Record<RecordType, string> = {
+  DAILY: "",
+  FIRST: "/static/journal/icon_54.webp",
+  FAMILY: "/static/journal/icon_53.webp",
+  OTHER: "/static/journal/icon_26.webp",
+};
 </script>
 
 <template>
@@ -21,7 +28,10 @@ const emit = defineEmits<{
       <template #title>
         <view class="record-card__header">
           <view class="record-card__identity">
-            <view class="record-card__avatar">{{ getRecordTypeEmoji(record.type) }}</view>
+            <view class="record-card__avatar">
+              <text v-if="record.type === 'DAILY'" class="record-card__avatar-symbol">☀️</text>
+              <image v-else class="record-card__avatar-image" :src="recordTypeIcons[record.type]" mode="aspectFit" />
+            </view>
             <view class="record-card__heading">
               <text class="record-card__type">{{ getRecordTypeLabel(record.type) }}</text>
               <text class="record-card__meta">
@@ -34,7 +44,10 @@ const emit = defineEmits<{
       </template>
 
       <text class="record-card__content">{{ record.content }}</text>
-      <MediaGallery :assets="record.assets" compact :previewable="false" />
+      <view class="record-card__media">
+        <MediaGallery :assets="record.assets" compact :previewable="false" />
+        <image v-if="record.assets.length" class="record-card__tape" src="/static/journal/15_tape_pink_check.webp" mode="aspectFit" />
+      </view>
 
       <template #footer>
         <view class="record-card__footer">
@@ -50,9 +63,11 @@ const emit = defineEmits<{
 .growth-record-card {
   display: block !important;
   margin: 0 !important;
-  border-radius: 28rpx !important;
-  background: var(--color-surface) !important;
-  box-shadow: var(--shadow-card) !important;
+  overflow: visible !important;
+  border: 1rpx solid rgba(165, 139, 117, 0.2) !important;
+  border-radius: 24rpx !important;
+  background: rgba(255, 252, 246, 0.92) !important;
+  box-shadow: 0 10rpx 24rpx rgba(112, 84, 64, 0.1) !important;
 }
 
 .record-card {
@@ -80,8 +95,17 @@ const emit = defineEmits<{
     align-items: center;
     justify-content: center;
     border-radius: 22rpx;
-    background: var(--color-primary-soft);
-    font-size: 32rpx;
+    background: #f7f0df;
+  }
+
+  &__avatar-image {
+    width: 50rpx;
+    height: 50rpx;
+  }
+
+  &__avatar-symbol {
+    font-size: 42rpx;
+    line-height: 1;
   }
 
   &__heading {
@@ -119,6 +143,22 @@ const emit = defineEmits<{
     line-height: 1.65;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+
+  &__media {
+    position: relative;
+    margin-top: 18rpx;
+  }
+
+  &__tape {
+    position: absolute;
+    z-index: 2;
+    top: -30rpx;
+    right: -12rpx;
+    width: 96rpx;
+    height: 64rpx;
+    transform: rotate(10deg);
+    pointer-events: none;
   }
 
   &__footer {

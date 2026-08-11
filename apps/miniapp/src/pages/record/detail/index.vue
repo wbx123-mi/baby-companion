@@ -129,6 +129,8 @@ function goBack(): void {
 
 <style scoped lang="scss">
 .record-detail {
+  padding-top: 0;
+
   &__content {
     display: grid;
     gap: 24rpx;

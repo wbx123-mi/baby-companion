@@ -13,7 +13,8 @@ defineEmits<{
 
 <template>
   <view class="baby-hero" @click="$emit('open-profile')">
-    <view class="baby-hero__glow">🌙</view>
+    <image class="baby-hero__background" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+    <image class="baby-hero__moon" src="/static/journal/03_moon_stars.webp" mode="aspectFit" />
     <view class="baby-hero__top">
       <view class="baby-hero__avatar">
         <image v-if="baby.avatarUrl" class="baby-hero__avatar-image" :src="baby.avatarUrl" mode="aspectFill" />
@@ -38,20 +39,31 @@ defineEmits<{
 <style scoped lang="scss">
 .baby-hero {
   position: relative;
-  padding: 34rpx;
+  min-height: 400rpx;
+  margin: 0 -14rpx;
+  padding: 72rpx 64rpx 46rpx 72rpx;
   overflow: hidden;
-  border: 1rpx solid var(--color-border);
-  border-radius: 34rpx;
-  background: var(--gradient-hero);
-  box-shadow: var(--shadow-card);
+  background-color: transparent;
 
-  &__glow {
+  &__background {
     position: absolute;
-    top: 18rpx;
-    right: 24rpx;
-    opacity: 0.48;
-    font-size: 72rpx;
-    transform: rotate(12deg);
+    z-index: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  &__moon {
+    position: absolute;
+    z-index: 1;
+    top: 88rpx;
+    right: 50rpx;
+    width: 104rpx;
+    height: 110rpx;
   }
 
   &__top,
@@ -61,19 +73,26 @@ defineEmits<{
     align-items: center;
   }
 
+  &__top,
+  &__age,
+  &__intro {
+    position: relative;
+    z-index: 1;
+  }
+
   &__avatar {
     display: flex;
-    width: 100rpx;
-    height: 100rpx;
+    width: 96rpx;
+    height: 96rpx;
     overflow: hidden;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border: 6rpx solid var(--color-surface);
+    border: 5rpx solid var(--color-surface);
     border-radius: 50%;
     background: var(--color-primary-soft);
-    font-size: 50rpx;
-    box-shadow: var(--shadow-card);
+    font-size: 44rpx;
+    box-shadow: 0 6rpx 18rpx rgba(130, 83, 58, 0.1);
   }
 
   &__avatar-image {
@@ -83,22 +102,25 @@ defineEmits<{
 
   &__identity {
     min-width: 0;
-    margin-left: 24rpx;
+    margin-left: 20rpx;
   }
 
   &__name-row {
-    gap: 14rpx;
+    gap: 12rpx;
   }
 
   &__name {
     color: var(--color-text);
-    font-size: 40rpx;
+    font-size: 36rpx;
     font-weight: 800;
   }
 
   &__arrow {
+    padding: 6rpx 14rpx;
+    border-radius: 18rpx;
     color: var(--color-primary-strong);
-    font-size: 22rpx;
+    background: var(--color-primary-soft);
+    font-size: 20rpx;
   }
 
   &__birth {
@@ -109,27 +131,31 @@ defineEmits<{
   }
 
   &__age {
-    margin-top: 34rpx;
+    margin-top: 24rpx;
+    padding-top: 20rpx;
     align-items: baseline;
+    justify-content: center;
+    border-top: 1rpx solid rgba(127, 116, 110, 0.18);
   }
 
   &__age-label {
     color: var(--color-text-secondary);
-    font-size: 24rpx;
+    font-size: 22rpx;
   }
 
   &__age-value {
-    margin-left: 12rpx;
+    margin-left: 10rpx;
     color: var(--color-primary-strong);
-    font-size: 40rpx;
+    font-size: 38rpx;
     font-weight: 800;
   }
 
   &__intro {
     display: block;
-    margin-top: 16rpx;
+    margin-top: 12rpx;
     color: var(--color-text-secondary);
-    font-size: 24rpx;
+    font-size: 22rpx;
+    text-align: center;
   }
 }
 </style>

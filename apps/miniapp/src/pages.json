@@ -83,15 +83,21 @@
     "list": [
       {
         "pagePath": "pages/home/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "static/journal/tab-home.png",
+        "selectedIconPath": "static/journal/tab-home-selected.png"
       },
       {
         "pagePath": "pages/growth/index",
-        "text": "成长"
+        "text": "成长",
+        "iconPath": "static/journal/tab-growth.png",
+        "selectedIconPath": "static/journal/tab-growth-selected.png"
       },
       {
         "pagePath": "pages/mine/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/journal/tab-profile.png",
+        "selectedIconPath": "static/journal/tab-profile-selected.png"
       }
     ]
   },

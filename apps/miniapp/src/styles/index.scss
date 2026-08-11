@@ -28,7 +28,16 @@ textarea {
   min-height: 100vh;
   padding: 24rpx 24rpx calc(40rpx + env(safe-area-inset-bottom));
   color: var(--color-text);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image: url("/static/journal/bg-page.webp");
+  background-repeat: no-repeat;
+  background-position: top center;
+  // 素材四角自带圆角，统一横向放大，将圆角裁出所有页面的可视区域。
+  background-size: 126% 100%;
+}
+
+.page-shell.wot-theme-dark {
+  background-image: none;
 }
 
 .page-section {
@@ -54,4 +63,3 @@ textarea {
 .safe-bottom-space {
   height: calc(120rpx + env(safe-area-inset-bottom));
 }
-

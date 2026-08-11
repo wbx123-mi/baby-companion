@@ -107,7 +107,6 @@ async function handleAction(event: { index: number }): Promise<void> {
 
 <template>
   <view :class="['page-shell', 'growth-page', store.themeClass]">
-    <view class="growth-page__top-space" />
     <BabyHero v-if="hasFamily && store.baby" :baby="store.baby" @open-profile="openBabyProfile" />
 
     <view v-if="hasFamily" class="growth-page__filters">
@@ -167,14 +166,28 @@ async function handleAction(event: { index: number }): Promise<void> {
       </view>
     </view>
 
-    <view v-else-if="hasFamily" class="growth-page__empty surface-card">
-      <wd-status-tip image="content" tip="还没有符合条件的成长记录" />
-      <wd-button size="small" @click="createRecord">记下这一刻</wd-button>
+    <view v-else-if="hasFamily" class="growth-page__empty">
+      <image class="growth-page__empty-paper" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+      <view class="growth-page__empty-content">
+        <image class="growth-page__empty-art" src="/static/journal/icon_52.webp" mode="aspectFit" />
+        <text class="growth-page__empty-title">还没有成长记录</text>
+        <text class="growth-page__empty-description">把今天的小事写下来，慢慢就会变成宝宝的成长故事。</text>
+        <view class="growth-page__empty-action">
+          <wd-button block size="large" @click="createRecord">记下这一刻</wd-button>
+        </view>
+      </view>
     </view>
 
-    <view v-else class="growth-page__empty surface-card">
-      <wd-status-tip image="content" tip="加入家庭后，就能和家人一起记录成长" />
-      <wd-button size="small" @click="goHome">返回首页</wd-button>
+    <view v-else class="growth-page__empty">
+      <image class="growth-page__empty-paper" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+      <view class="growth-page__empty-content">
+        <image class="growth-page__empty-art" src="/static/journal/icon_53.webp" mode="aspectFit" />
+        <text class="growth-page__empty-title">先开启一个温暖的小家</text>
+        <text class="growth-page__empty-description">加入家庭后，就能和家人一起记录宝宝的每一次成长。</text>
+        <view class="growth-page__empty-action">
+          <wd-button block size="large" @click="goHome">返回首页</wd-button>
+        </view>
+      </view>
     </view>
 
     <view class="safe-bottom-space" />
@@ -192,13 +205,11 @@ async function handleAction(event: { index: number }): Promise<void> {
 
 <style scoped lang="scss">
 .growth-page {
-  padding-top: 0;
-  background: var(--color-bg);
-
-  &__top-space {
-    height: 24rpx;
-    background: var(--color-bg);
-  }
+  --wot-button-primary-bg-color: var(--color-primary);
+  --wot-button-primary-color: var(--color-surface-muted);
+  --wot-button-large-height: 76rpx;
+  --wot-button-large-radius: 18rpx;
+  --wot-button-large-fs: 28rpx;
 
   &__filters {
     margin-top: 26rpx;
@@ -215,12 +226,72 @@ async function handleAction(event: { index: number }): Promise<void> {
   }
 
   &__empty {
+    position: relative;
     display: flex;
-    margin-top: 30rpx;
+    min-height: 560rpx;
+    margin-top: 20rpx;
+    padding: 82rpx 72rpx 68rpx;
+    overflow: hidden;
     flex-direction: column;
     align-items: center;
-    gap: 20rpx;
+    justify-content: center;
   }
+
+  &__empty-paper {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__empty-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  &__empty-art {
+    width: 132rpx;
+    height: 132rpx;
+  }
+
+  &__empty-title {
+    margin-top: 18rpx;
+    color: var(--color-text);
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 36rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+  }
+
+  &__empty-description {
+    max-width: 450rpx;
+    margin-top: 12rpx;
+    color: var(--color-text-secondary);
+    font-size: 23rpx;
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  &__empty-action {
+    width: 320rpx;
+    margin-top: 30rpx;
+  }
+}
+
+.growth-heading {
+  display: flex;
+  height: 116rpx;
+  align-items: center;
+  justify-content: center;
+
 }
 
 .filter-scroll {
@@ -242,8 +313,9 @@ async function handleAction(event: { index: number }): Promise<void> {
 .month-chip {
   flex-shrink: 0;
   color: var(--color-text-secondary);
-  background: var(--color-surface);
-  border: 1rpx solid var(--color-border);
+  background: rgba(255, 252, 246, 0.9);
+  border: 1rpx solid rgba(165, 139, 117, 0.22);
+  box-shadow: 0 4rpx 12rpx rgba(112, 84, 64, 0.06);
 }
 
 .filter-chip {
@@ -256,6 +328,7 @@ async function handleAction(event: { index: number }): Promise<void> {
     background: var(--color-primary);
     border-color: var(--color-primary);
     font-weight: 700;
+    box-shadow: 0 6rpx 14rpx rgba(217, 95, 72, 0.2);
   }
 }
 

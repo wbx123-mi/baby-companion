@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import { ulid } from "ulid";
 import { BootstrapService } from "../bootstrap/bootstrap.service";
 import { AppException } from "../common/app.exception";
+import { MediaService } from "../media/media.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 const INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -21,6 +22,7 @@ export class FamilyInvitesService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly bootstrapService: BootstrapService,
+    private readonly mediaService: MediaService,
   ) {}
 
   async createInvite(userId: string, familyId: string): Promise<FamilyInviteContract> {
@@ -87,16 +89,27 @@ export class FamilyInvitesService {
 
     const members = await this.prisma.familyMember.findMany({
       where: { familyId, status: "ACTIVE", user: { status: "ACTIVE" } },
-      include: { user: { select: { id: true, nickname: true, avatarUrl: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatarUrl: true,
+            avatarAsset: { select: { objectKey: true, status: true } },
+          },
+        },
+      },
       orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
     });
-    return members.map((member) => ({
+    return Promise.all(members.map(async (member) => ({
       userId: member.user.id,
       nickname: member.user.nickname,
-      avatarUrl: member.user.avatarUrl,
+      avatarUrl: member.user.avatarAsset?.status === "READY"
+        ? await this.mediaService.getReadUrl(member.user.avatarAsset.objectKey)
+        : member.user.avatarUrl,
       role: member.role,
       joinedAt: member.joinedAt.toISOString(),
-    }));
+    })));
   }
 
   async joinFamily(userId: string, rawCode: string): Promise<BootstrapContract> {

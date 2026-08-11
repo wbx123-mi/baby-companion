@@ -47,22 +47,36 @@ function openGrowth(): void {
 
 <template>
   <view :class="['page-shell', 'home-page', store.themeClass]">
+    <view class="home-title-art">
+      <image class="home-title-art__moon" src="/static/journal/03_moon_stars.webp" mode="aspectFit" />
+      <image class="home-title-art__single-leaf" src="/static/journal/13_single_leaf.webp" mode="aspectFit" />
+      <image class="home-title-art__leaf-sprig" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
+      <image class="home-title-art__title" src="/static/journal/01_title_growth_book.webp" mode="aspectFit" />
+      <image class="home-title-art__subtitle" src="/static/journal/02_subtitle_record_today.webp" mode="aspectFit" />
+    </view>
     <view class="home-kv">
-      <view class="home-kv__glow home-kv__glow--large" />
-      <view class="home-kv__glow home-kv__glow--small" />
-      <view class="home-kv__content">
+      <view v-if="hasFamily" class="home-kv__milestone">
         <text class="home-kv__eyebrow">
-          {{ hasFamily ? `${greeting}，${store.user?.nickname || "家人"}` : greeting }}
+          {{ greeting }}，{{ store.user?.nickname || "家人" }}
         </text>
-        <text class="home-kv__title">
-          {{ hasFamily ? `陪 ${store.baby?.nickname} 慢慢长大` : "把爱留在每一个平常日子" }}
-        </text>
-        <text class="home-kv__subtitle">
-          {{ hasFamily ? "今天也值得被好好记录" : "创建或加入一个家庭，一起收藏宝宝的成长故事" }}
-        </text>
+        <view class="home-kv__portrait-wrap">
+          <image class="home-kv__portrait" src="/static/journal/04_baby_portrait_frame.webp" mode="aspectFit" />
+          <image class="home-kv__heart" src="/static/journal/07_heart_doodle.webp" mode="aspectFit" />
+        </view>
+        <image class="home-kv__today" src="/static/journal/05_today_ribbon.webp" mode="aspectFit" />
+        <view class="home-kv__age-row">
+          <image class="home-kv__age-leaf home-kv__age-leaf--left" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
+          <text class="home-kv__age">{{ calculateAgeText(store.baby?.birthDate || "") }}</text>
+          <image class="home-kv__age-leaf home-kv__age-leaf--right" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
+        </view>
+        <text class="home-kv__milestone-note">陪 {{ store.baby?.nickname }} 把每个普通日子好好收藏</text>
+      </view>
+      <view v-else class="home-kv__content">
+        <text class="home-kv__eyebrow">{{ greeting }}</text>
+        <text class="home-kv__title">把爱留在每一个平常日子</text>
+        <text class="home-kv__subtitle">创建或加入一个家庭，一起收藏宝宝的成长故事</text>
         <view class="home-kv__illustration">
-          <view class="home-kv__family">{{ hasFamily ? "👨‍👩‍👧" : "🏡" }}</view>
-          <view class="home-kv__heart">❤</view>
+          <image class="home-kv__family" src="/static/journal/icon_53.webp" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -77,11 +91,10 @@ function openGrowth(): void {
         <view class="home-family__header">
           <view class="home-family__avatar">
             <image v-if="store.baby?.avatarUrl" class="home-family__avatar-image" :src="store.baby.avatarUrl" mode="aspectFill" />
-            <text v-else>👶🏻</text>
+            <image v-else class="home-family__avatar-placeholder" src="/static/journal/icon_01.webp" mode="aspectFit" />
           </view>
           <view class="home-family__identity">
             <text class="home-family__name">{{ store.baby?.nickname }}</text>
-            <text class="home-family__age">{{ calculateAgeText(store.baby?.birthDate || "") }}</text>
           </view>
           <wd-tag type="warning" plain>{{ store.family?.name }}</wd-tag>
         </view>
@@ -93,14 +106,10 @@ function openGrowth(): void {
 
       <view class="home-page__quick-grid">
         <view class="home-quick-card" @click="openGrowth">
-          <text class="home-quick-card__icon">📖</text>
-          <text class="home-quick-card__title">成长故事</text>
-          <text class="home-quick-card__description">翻看家人留下的珍贵片段</text>
+          <image class="home-quick-card__art" src="/static/journal/story11.webp" mode="aspectFit" />
         </view>
         <view class="home-quick-card" @click="navigate('/pages/baby/profile/index')">
-          <text class="home-quick-card__icon">🌱</text>
-          <text class="home-quick-card__title">宝宝档案</text>
-          <text class="home-quick-card__description">看看宝宝来到世界多久了</text>
+          <image class="home-quick-card__art" src="/static/journal/baby11.webp" mode="aspectFit" />
         </view>
       </view>
     </template>
@@ -113,7 +122,7 @@ function openGrowth(): void {
         <wd-button block size="large" plain @click="navigate('/pages/join-family/index')">使用邀请码加入</wd-button>
       </view>
       <view class="home-entry__privacy">
-        <text class="home-entry__privacy-icon">🔒</text>
+        <image class="home-entry__privacy-icon" src="/static/journal/icon_20.webp" mode="aspectFit" />
         <text>这是只属于家人的私密成长簿</text>
       </view>
     </view>
@@ -140,42 +149,77 @@ function openGrowth(): void {
   }
 }
 
+.home-title-art {
+  position: relative;
+  display: flex;
+  min-height: 310rpx;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+
+  &__title {
+    position: relative;
+    z-index: 1;
+    width: 488rpx;
+    height: 210rpx;
+    transform: translate(-30rpx, -14rpx);
+  }
+
+  &__subtitle {
+    position: relative;
+    z-index: 2;
+    width: 370rpx;
+    height: 118rpx;
+    margin-top: -66rpx;
+    transform: rotate(-2deg);
+  }
+
+  &__moon,
+  &__single-leaf,
+  &__leaf-sprig {
+    position: absolute;
+    z-index: 0;
+  }
+
+  &__moon {
+    top: 38rpx;
+    right: -2rpx;
+    width: 112rpx;
+    height: 122rpx;
+  }
+
+  &__single-leaf {
+    bottom: 42rpx;
+    left: 10rpx;
+    width: 42rpx;
+    height: 74rpx;
+    transform: rotate(-10deg);
+  }
+
+  &__leaf-sprig {
+    right: 22rpx;
+    bottom: 8rpx;
+    width: 94rpx;
+    height: 98rpx;
+    transform: rotate(8deg);
+  }
+}
+
 .home-kv {
   position: relative;
-  overflow: hidden;
-  min-height: 520rpx;
-  border: 1rpx solid var(--color-border);
-  border-radius: 36rpx;
-  background: var(--gradient-hero);
-  box-shadow: var(--shadow-card);
+  min-height: 480rpx;
+  margin: 10rpx 34rpx 0;
+  border: 1rpx solid rgba(165, 139, 117, 0.18);
+  border-radius: 18rpx;
+  background: rgba(255, 252, 246, 0.9);
+  box-shadow: 0 12rpx 28rpx rgba(112, 84, 64, 0.12);
 
-  &__glow {
-    position: absolute;
-    border-radius: 50%;
-    background: var(--color-surface);
-    opacity: 0.42;
-
-    &--large {
-      top: -150rpx;
-      right: -110rpx;
-      width: 360rpx;
-      height: 360rpx;
-    }
-
-    &--small {
-      right: 190rpx;
-      bottom: 76rpx;
-      width: 96rpx;
-      height: 96rpx;
-      opacity: 0.28;
-    }
-  }
 
   &__content {
     position: relative;
     display: flex;
-    height: 520rpx;
-    padding: 46rpx 40rpx;
+    min-height: 480rpx;
+    padding: 76rpx 42rpx 38rpx;
     flex-direction: column;
   }
 
@@ -186,9 +230,10 @@ function openGrowth(): void {
   }
 
   &__title {
-    width: 82%;
+    width: 76%;
     margin-top: 18rpx;
-    font-size: 46rpx;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 42rpx;
     font-weight: 800;
     line-height: 1.28;
   }
@@ -206,26 +251,102 @@ function openGrowth(): void {
     right: 36rpx;
     bottom: 24rpx;
     display: flex;
-    width: 240rpx;
-    height: 178rpx;
+    width: 210rpx;
+    height: 150rpx;
     align-items: center;
     justify-content: center;
-    border-radius: 48% 48% 30% 30%;
-    background: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    background: transparent;
     transform: rotate(-3deg);
   }
 
   &__family {
-    font-size: 86rpx;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__milestone {
+    position: relative;
+    display: flex;
+    min-height: 480rpx;
+    padding: 24rpx 32rpx 20rpx;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  &__milestone &__eyebrow {
+    position: absolute;
+    top: 30rpx;
+    left: 34rpx;
+    color: var(--color-text-secondary);
+    font-size: 20rpx;
+    font-weight: 500;
+    letter-spacing: 2rpx;
+  }
+
+  &__portrait-wrap {
+    position: relative;
+    width: 276rpx;
+    height: 232rpx;
+    margin-top: 20rpx;
+  }
+
+  &__portrait {
+    width: 100%;
+    height: 100%;
   }
 
   &__heart {
     position: absolute;
-    top: -16rpx;
-    right: 18rpx;
-    color: var(--color-primary);
-    font-size: 40rpx;
+    top: 44rpx;
+    right: -26rpx;
+    width: 52rpx;
+    height: 52rpx;
+    transform: rotate(9deg);
+  }
+
+  &__today {
+    position: relative;
+    z-index: 2;
+    width: 150rpx;
+    height: 56rpx;
+    margin-top: -24rpx;
+  }
+
+  &__age-row {
+    display: flex;
+    margin-top: 0;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__age {
+    margin: 0 14rpx;
+    color: #49382f;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 62rpx;
+    font-weight: 700;
+    letter-spacing: 3rpx;
+    line-height: 1.2;
+  }
+
+  &__age-leaf {
+    width: 44rpx;
+    height: 44rpx;
+
+    &--left {
+      transform: rotate(-28deg);
+    }
+
+    &--right {
+      transform: rotate(152deg);
+    }
+  }
+
+  &__milestone-note {
+    margin-top: 2rpx;
+    color: var(--color-text-secondary);
+    font-size: 20rpx;
+    letter-spacing: 1rpx;
   }
 }
 
@@ -235,6 +356,17 @@ function openGrowth(): void {
 }
 
 .home-family {
+  border-radius: 18rpx;
+  background: rgba(255, 252, 246, 0.9);
+  --wot-button-primary-bg-color: var(--color-primary);
+  --wot-button-primary-color: #fffaf6;
+  --wot-button-plain-bg-color: rgba(255, 252, 246, 0.72);
+  --wot-button-large-height: 76rpx;
+  --wot-button-large-radius: 18rpx;
+  --wot-button-large-fs: 28rpx;
+  --wot-tag-warning-color: var(--color-primary-strong);
+  --wot-tag-fs: 21rpx;
+
   &__header {
     display: flex;
     align-items: center;
@@ -249,9 +381,11 @@ function openGrowth(): void {
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
+    border: 4rpx solid rgba(255, 255, 255, 0.9);
     border-radius: 50%;
     background: var(--color-primary-soft);
     font-size: 44rpx;
+    box-shadow: 0 4rpx 12rpx rgba(112, 84, 64, 0.1);
   }
 
   &__avatar-image {
@@ -259,84 +393,84 @@ function openGrowth(): void {
     height: 100%;
   }
 
+  &__avatar-placeholder {
+    width: 74rpx;
+    height: 74rpx;
+  }
+
   &__identity {
     display: flex;
     min-width: 0;
     flex: 1;
     flex-direction: column;
+    justify-content: center;
   }
 
   &__name {
-    font-size: 32rpx;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 34rpx;
     font-weight: 800;
   }
 
-  &__age {
-    margin-top: 4rpx;
+  &__actions {
+    display: grid;
+    margin-top: 24rpx;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14rpx;
+  }
+}
+
+.home-quick-card {
+  display: flex;
+  min-height: 0;
+  padding: 0;
+  align-items: center;
+  flex-direction: column;
+  border: 0;
+  background: transparent;
+
+  &__art {
+    width: 100%;
+    height: 390rpx;
+  }
+}
+
+.home-entry {
+  padding: 30rpx 28rpx 24rpx;
+  border-radius: 18rpx;
+  background: var(--color-surface-muted);
+  --wot-button-primary-bg-color: var(--color-primary);
+  --wot-button-primary-color: var(--color-surface-muted);
+  --wot-button-plain-bg-color: var(--color-surface-muted);
+  --wot-button-large-height: 76rpx;
+  --wot-button-large-radius: 18rpx;
+  --wot-button-large-fs: 28rpx;
+
+  &__title {
+    display: block;
+    font-family: "STKaiti", "KaiTi", serif;
+    font-size: 32rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+  }
+
+  &__description {
+    display: block;
+    margin-top: 8rpx;
     color: var(--color-text-secondary);
     font-size: 23rpx;
   }
 
   &__actions {
     display: grid;
-    margin-top: 28rpx;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16rpx;
-  }
-}
-
-.home-quick-card {
-  display: flex;
-  min-height: 228rpx;
-  padding: 26rpx;
-  flex-direction: column;
-  border: 1rpx solid var(--color-border);
-  border-radius: 26rpx;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-card);
-
-  &__icon {
-    font-size: 42rpx;
-  }
-
-  &__title {
-    margin-top: 18rpx;
-    font-size: 28rpx;
-    font-weight: 800;
-  }
-
-  &__description {
-    margin-top: 8rpx;
-    color: var(--color-text-secondary);
-    font-size: 22rpx;
-    line-height: 1.55;
-  }
-}
-
-.home-entry {
-  &__title {
-    display: block;
-    font-size: 32rpx;
-    font-weight: 800;
-  }
-
-  &__description {
-    display: block;
-    margin-top: 10rpx;
-    color: var(--color-text-secondary);
-    font-size: 24rpx;
-  }
-
-  &__actions {
-    display: grid;
-    margin-top: 30rpx;
-    gap: 18rpx;
+    margin-top: 26rpx;
+    gap: 14rpx;
   }
 
   &__privacy {
     display: flex;
-    margin-top: 28rpx;
-    padding-top: 22rpx;
+    margin-top: 24rpx;
+    padding-top: 20rpx;
     align-items: center;
     justify-content: center;
     border-top: 1rpx solid var(--color-divider);
@@ -345,6 +479,8 @@ function openGrowth(): void {
   }
 
   &__privacy-icon {
+    width: 32rpx;
+    height: 32rpx;
     margin-right: 10rpx;
   }
 }
