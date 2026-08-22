@@ -8,6 +8,7 @@ import { RECORD_TYPE_OPTIONS } from "@/constants/records";
 import { useAppStore } from "@/stores/app";
 import type { GrowthRecord, RecordType } from "@/types/domain";
 import { formatMonthKey, formatMonthLabel, formatRecordDate } from "@/utils/date";
+import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
 const message = useMessage();
@@ -167,9 +168,9 @@ async function handleAction(event: { index: number }): Promise<void> {
     </view>
 
     <view v-else-if="hasFamily" class="growth-page__empty">
-      <image class="growth-page__empty-paper" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+      <image class="growth-page__empty-paper" :src="journalAsset('card-bg.webp')" mode="scaleToFill" />
       <view class="growth-page__empty-content">
-        <image class="growth-page__empty-art" src="/static/journal/icon_52.webp" mode="aspectFit" />
+        <image class="growth-page__empty-art" :src="journalAsset('icon_52.webp')" mode="aspectFit" />
         <text class="growth-page__empty-title">还没有成长记录</text>
         <text class="growth-page__empty-description">把今天的小事写下来，慢慢就会变成宝宝的成长故事。</text>
         <view class="growth-page__empty-action">
@@ -179,9 +180,9 @@ async function handleAction(event: { index: number }): Promise<void> {
     </view>
 
     <view v-else class="growth-page__empty">
-      <image class="growth-page__empty-paper" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+      <image class="growth-page__empty-paper" :src="journalAsset('card-bg.webp')" mode="scaleToFill" />
       <view class="growth-page__empty-content">
-        <image class="growth-page__empty-art" src="/static/journal/icon_53.webp" mode="aspectFit" />
+        <image class="growth-page__empty-art" :src="journalAsset('icon_53.webp')" mode="aspectFit" />
         <text class="growth-page__empty-title">先开启一个温暖的小家</text>
         <text class="growth-page__empty-description">加入家庭后，就能和家人一起记录宝宝的每一次成长。</text>
         <view class="growth-page__empty-action">

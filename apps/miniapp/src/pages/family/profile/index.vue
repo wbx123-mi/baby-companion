@@ -4,6 +4,7 @@ import { onLoad } from "@dcloudio/uni-app";
 import type { FamilyInviteContract, FamilyMemberContract } from "@baby-companion/contracts";
 import { authApi } from "@/api/auth-api";
 import { useAppStore } from "@/stores/app";
+import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
 const familyName = ref("");
@@ -83,20 +84,20 @@ async function submit(): Promise<void> {
 <template>
   <view :class="['page-shell', 'family-profile', store.themeClass]">
     <view class="family-profile__hero">
-      <image class="family-profile__hero-paper" src="/static/journal/card-bg.webp" mode="scaleToFill" />
+      <image class="family-profile__hero-paper" :src="journalAsset('card-bg.webp')" mode="scaleToFill" />
       <view class="family-profile__hero-content">
-        <image class="family-profile__hero-house" src="/static/journal/icon_53.webp" mode="aspectFit" />
+        <image class="family-profile__hero-house" :src="journalAsset('icon_53.webp')" mode="aspectFit" />
         <text class="family-profile__hero-label">家 · 庭 · 档 · 案</text>
         <text class="family-profile__title">{{ familyName || "宝宝的小家" }}</text>
         <view class="family-profile__subtitle-row">
-          <image class="family-profile__subtitle-leaf" src="/static/journal/icon_20.webp" mode="aspectFit" />
+          <image class="family-profile__subtitle-leaf" :src="journalAsset('icon_20.webp')" mode="aspectFit" />
           <text class="family-profile__subtitle">一家人一起记录，数据只在家庭内可见</text>
         </view>
       </view>
     </view>
 
     <view class="surface-card family-profile__form">
-      <image class="family-profile__card-tape" src="/static/journal/icon_35.webp" mode="aspectFit" />
+      <image class="family-profile__card-tape" :src="journalAsset('icon_35.webp')" mode="aspectFit" />
       <view class="family-profile__section-heading">
         <text class="family-profile__section-title">小家资料</text>
         <text class="family-profile__section-note">记录属于你们的小家</text>
@@ -109,7 +110,7 @@ async function submit(): Promise<void> {
     <view class="surface-card family-profile__members">
       <view class="family-profile__members-header">
         <view class="family-profile__members-heading">
-          <image class="family-profile__heading-leaf" src="/static/journal/icon_20.webp" mode="aspectFit" />
+          <image class="family-profile__heading-leaf" :src="journalAsset('icon_20.webp')" mode="aspectFit" />
           <text class="family-profile__members-title">和谁一起记录成长</text>
         </view>
         <text class="family-profile__members-count">{{ members.length }} 人</text>
@@ -143,13 +144,13 @@ async function submit(): Promise<void> {
     </view>
 
     <view v-if="store.family?.role === 'ADMIN'" class="surface-card family-profile__invite">
-      <image class="family-profile__invite-tape" src="/static/journal/icon_35.webp" mode="aspectFit" />
+      <image class="family-profile__invite-tape" :src="journalAsset('icon_35.webp')" mode="aspectFit" />
       <view class="family-profile__invite-heading">
         <view>
           <text class="family-profile__invite-title">邀请家人加入</text>
           <text class="family-profile__invite-description">生成后将自动撤销旧邀请码，新邀请码 7 天内有效。</text>
         </view>
-        <image class="family-profile__invite-leaf" src="/static/journal/icon_20.webp" mode="aspectFit" />
+        <image class="family-profile__invite-leaf" :src="journalAsset('icon_20.webp')" mode="aspectFit" />
       </view>
       <view v-if="invite" class="family-profile__invite-code" @click="copyInviteCode">
         <text>{{ invite.code }}</text>

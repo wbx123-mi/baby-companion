@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Baby } from "@/types/domain";
 import { calculateAgeText, formatBirthText } from "@/utils/date";
+import { journalAsset } from "@/utils/journal-assets";
 
 defineProps<{
   baby: Baby;
@@ -13,8 +14,8 @@ defineEmits<{
 
 <template>
   <view class="baby-hero" @click="$emit('open-profile')">
-    <image class="baby-hero__background" src="/static/journal/card-bg.webp" mode="scaleToFill" />
-    <image class="baby-hero__moon" src="/static/journal/03_moon_stars.webp" mode="aspectFit" />
+    <image class="baby-hero__background" :src="journalAsset('card-bg.webp')" mode="scaleToFill" />
+    <image class="baby-hero__moon" :src="journalAsset('03_moon_stars.webp')" mode="aspectFit" />
     <view class="baby-hero__top">
       <view class="baby-hero__avatar">
         <image v-if="baby.avatarUrl" class="baby-hero__avatar-image" :src="baby.avatarUrl" mode="aspectFill" />

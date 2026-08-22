@@ -6,6 +6,7 @@ import { authApi } from "@/api/auth-api";
 import { mediaApi } from "@/api/media-api";
 import { useAppStore } from "@/stores/app";
 import { calculateAgeText } from "@/utils/date";
+import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
 const message = useMessage();
@@ -121,7 +122,7 @@ async function resetDemo(): Promise<void> {
 <template>
   <view :class="['page-shell', 'mine-page', store.themeClass]">
     <view class="mine-page__user-card">
-      <image class="mine-page__tape" src="/static/journal/icon_35.webp" mode="aspectFit" />
+      <image class="mine-page__tape" :src="journalAsset('icon_35.webp')" mode="aspectFit" />
       <view class="mine-page__avatar" @click="changeAvatar">
         <image v-if="store.user?.avatarUrl" class="mine-page__avatar-image" :src="store.user.avatarUrl" mode="aspectFill" />
         <image v-else class="mine-page__avatar-placeholder" src="/static/journal/icon_47.webp" mode="aspectFit" />
@@ -139,7 +140,7 @@ async function resetDemo(): Promise<void> {
       <text class="section-title">个人</text>
       <wd-cell-group border custom-class="mine-cell-group">
         <wd-cell title="家庭昵称" :value="displayName" label="家人看到你的称呼" clickable is-link @click="openNicknameEditor">
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_52.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_52.webp')" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>
@@ -156,7 +157,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="navigate('/pages/baby/profile/index')"
         >
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_01.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_01.webp')" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="store.family"
@@ -167,7 +168,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="navigate('/pages/family/profile/index')"
         >
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_02.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_02.webp')" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="!store.family"
@@ -177,7 +178,7 @@ async function resetDemo(): Promise<void> {
           size="large"
           @click="goHome"
         >
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_02.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_02.webp')" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>
@@ -186,13 +187,13 @@ async function resetDemo(): Promise<void> {
       <text class="section-title">偏好与开发</text>
       <wd-cell-group border custom-class="mine-cell-group">
         <wd-cell title="深色模式" label="跟着此项目独立保存">
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_21.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_21.webp')" mode="aspectFit" /></template>
           <template #value>
             <wd-switch :model-value="store.darkMode" @update:model-value="store.setDarkMode" />
           </template>
         </wd-cell>
         <wd-cell title="Mock 数据" value="恢复初始内容" clickable is-link @click="resetDemo">
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_24.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_24.webp')" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
           v-if="authApi.isDevelopmentLoginEnabled"
@@ -203,10 +204,10 @@ async function resetDemo(): Promise<void> {
           is-link
           @click="switchDevelopmentIdentity"
         >
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_23.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_23.webp')" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell title="当前版本" value="0.2.0 · Hybrid API">
-          <template #icon><image class="mine-page__cell-icon" src="/static/journal/icon_20.webp" mode="aspectFit" /></template>
+          <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_20.webp')" mode="aspectFit" /></template>
         </wd-cell>
       </wd-cell-group>
     </view>

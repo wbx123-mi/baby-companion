@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { onPullDownRefresh, onShow } from "@dcloudio/uni-app";
 import { useAppStore } from "@/stores/app";
 import { calculateAgeText } from "@/utils/date";
+import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
 const refreshing = ref(false);
@@ -48,11 +49,11 @@ function openGrowth(): void {
 <template>
   <view :class="['page-shell', 'home-page', store.themeClass]">
     <view class="home-title-art">
-      <image class="home-title-art__moon" src="/static/journal/03_moon_stars.webp" mode="aspectFit" />
-      <image class="home-title-art__single-leaf" src="/static/journal/13_single_leaf.webp" mode="aspectFit" />
-      <image class="home-title-art__leaf-sprig" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
-      <image class="home-title-art__title" src="/static/journal/01_title_growth_book.webp" mode="aspectFit" />
-      <image class="home-title-art__subtitle" src="/static/journal/02_subtitle_record_today.webp" mode="aspectFit" />
+      <image class="home-title-art__moon" :src="journalAsset('03_moon_stars.webp')" mode="aspectFit" />
+      <image class="home-title-art__single-leaf" :src="journalAsset('13_single_leaf.webp')" mode="aspectFit" />
+      <image class="home-title-art__leaf-sprig" :src="journalAsset('10_leaf_sprig_mid.webp')" mode="aspectFit" />
+      <image class="home-title-art__title" :src="journalAsset('01_title_growth_book.webp')" mode="aspectFit" />
+      <image class="home-title-art__subtitle" :src="journalAsset('02_subtitle_record_today.webp')" mode="aspectFit" />
     </view>
     <view class="home-kv">
       <view v-if="hasFamily" class="home-kv__milestone">
@@ -60,14 +61,14 @@ function openGrowth(): void {
           {{ greeting }}，{{ store.user?.nickname || "家人" }}
         </text>
         <view class="home-kv__portrait-wrap">
-          <image class="home-kv__portrait" src="/static/journal/04_baby_portrait_frame.webp" mode="aspectFit" />
-          <image class="home-kv__heart" src="/static/journal/07_heart_doodle.webp" mode="aspectFit" />
+          <image class="home-kv__portrait" :src="journalAsset('04_baby_portrait_frame.webp')" mode="aspectFit" />
+          <image class="home-kv__heart" :src="journalAsset('07_heart_doodle.webp')" mode="aspectFit" />
         </view>
-        <image class="home-kv__today" src="/static/journal/05_today_ribbon.webp" mode="aspectFit" />
+        <image class="home-kv__today" :src="journalAsset('05_today_ribbon.webp')" mode="aspectFit" />
         <view class="home-kv__age-row">
-          <image class="home-kv__age-leaf home-kv__age-leaf--left" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
+          <image class="home-kv__age-leaf home-kv__age-leaf--left" :src="journalAsset('10_leaf_sprig_mid.webp')" mode="aspectFit" />
           <text class="home-kv__age">{{ calculateAgeText(store.baby?.birthDate || "") }}</text>
-          <image class="home-kv__age-leaf home-kv__age-leaf--right" src="/static/journal/10_leaf_sprig_mid.webp" mode="aspectFit" />
+          <image class="home-kv__age-leaf home-kv__age-leaf--right" :src="journalAsset('10_leaf_sprig_mid.webp')" mode="aspectFit" />
         </view>
         <text class="home-kv__milestone-note">陪 {{ store.baby?.nickname }} 把每个普通日子好好收藏</text>
       </view>
@@ -76,7 +77,7 @@ function openGrowth(): void {
         <text class="home-kv__title">把爱留在每一个平常日子</text>
         <text class="home-kv__subtitle">创建或加入一个家庭，一起收藏宝宝的成长故事</text>
         <view class="home-kv__illustration">
-          <image class="home-kv__family" src="/static/journal/icon_53.webp" mode="aspectFit" />
+          <image class="home-kv__family" :src="journalAsset('icon_53.webp')" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -91,7 +92,7 @@ function openGrowth(): void {
         <view class="home-family__header">
           <view class="home-family__avatar">
             <image v-if="store.baby?.avatarUrl" class="home-family__avatar-image" :src="store.baby.avatarUrl" mode="aspectFill" />
-            <image v-else class="home-family__avatar-placeholder" src="/static/journal/icon_01.webp" mode="aspectFit" />
+            <image v-else class="home-family__avatar-placeholder" :src="journalAsset('icon_01.webp')" mode="aspectFit" />
           </view>
           <view class="home-family__identity">
             <text class="home-family__name">{{ store.baby?.nickname }}</text>
@@ -106,10 +107,10 @@ function openGrowth(): void {
 
       <view class="home-page__quick-grid">
         <view class="home-quick-card" @click="openGrowth">
-          <image class="home-quick-card__art" src="/static/journal/story11.webp" mode="aspectFit" />
+          <image class="home-quick-card__art" :src="journalAsset('story11.webp')" mode="aspectFit" />
         </view>
         <view class="home-quick-card" @click="navigate('/pages/baby/profile/index')">
-          <image class="home-quick-card__art" src="/static/journal/baby11.webp" mode="aspectFit" />
+          <image class="home-quick-card__art" :src="journalAsset('baby11.webp')" mode="aspectFit" />
         </view>
       </view>
     </template>
@@ -122,7 +123,7 @@ function openGrowth(): void {
         <wd-button block size="large" plain @click="navigate('/pages/join-family/index')">使用邀请码加入</wd-button>
       </view>
       <view class="home-entry__privacy">
-        <image class="home-entry__privacy-icon" src="/static/journal/icon_20.webp" mode="aspectFit" />
+        <image class="home-entry__privacy-icon" :src="journalAsset('icon_20.webp')" mode="aspectFit" />
         <text>这是只属于家人的私密成长簿</text>
       </view>
     </view>

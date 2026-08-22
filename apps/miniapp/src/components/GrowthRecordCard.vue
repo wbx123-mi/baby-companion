@@ -2,6 +2,7 @@
 import { getRecordTypeLabel } from "@/constants/records";
 import type { GrowthRecord, RecordType } from "@/types/domain";
 import { calculateAgeText, formatRecordTime } from "@/utils/date";
+import { journalAsset } from "@/utils/journal-assets";
 import MediaGallery from "./MediaGallery.vue";
 
 defineProps<{
@@ -16,9 +17,9 @@ const emit = defineEmits<{
 
 const recordTypeIcons: Record<RecordType, string> = {
   DAILY: "",
-  FIRST: "/static/journal/icon_54.webp",
-  FAMILY: "/static/journal/icon_53.webp",
-  OTHER: "/static/journal/icon_26.webp",
+  FIRST: journalAsset("icon_54.webp"),
+  FAMILY: journalAsset("icon_53.webp"),
+  OTHER: journalAsset("icon_26.webp"),
 };
 </script>
 
@@ -46,7 +47,7 @@ const recordTypeIcons: Record<RecordType, string> = {
       <text class="record-card__content">{{ record.content }}</text>
       <view class="record-card__media">
         <MediaGallery :assets="record.assets" compact :previewable="false" />
-        <image v-if="record.assets.length" class="record-card__tape" src="/static/journal/15_tape_pink_check.webp" mode="aspectFit" />
+        <image v-if="record.assets.length" class="record-card__tape" :src="journalAsset('15_tape_pink_check.webp')" mode="aspectFit" />
       </view>
 
       <template #footer>
