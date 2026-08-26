@@ -19,6 +19,8 @@ const nicknameVisible = ref(false);
 const nicknameInput = ref("");
 const nicknameSaving = ref(false);
 const avatarUploading = ref(false);
+// Mock 初始化会覆盖演示数据，仅允许 local-mock 环境显示入口。
+const isMockDataEnabled = authApi.isDevelopmentLoginEnabled;
 
 onShow(() => {
   void store.bootstrap();
@@ -125,7 +127,7 @@ async function resetDemo(): Promise<void> {
       <image class="mine-page__tape" :src="journalAsset('icon_35.webp')" mode="aspectFit" />
       <view class="mine-page__avatar" @click="changeAvatar">
         <image v-if="store.user?.avatarUrl" class="mine-page__avatar-image" :src="store.user.avatarUrl" mode="aspectFill" />
-        <image v-else class="mine-page__avatar-placeholder" src="/static/journal/icon_47.webp" mode="aspectFit" />
+        <image v-else class="mine-page__avatar-placeholder" :src="journalAsset('icon_47.webp')" mode="aspectFit" />
         <text class="mine-page__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
       </view>
       <view class="mine-page__identity">
@@ -192,11 +194,11 @@ async function resetDemo(): Promise<void> {
             <wd-switch :model-value="store.darkMode" @update:model-value="store.setDarkMode" />
           </template>
         </wd-cell>
-        <wd-cell title="Mock 数据" value="恢复初始内容" clickable is-link @click="resetDemo">
+        <wd-cell v-if="isMockDataEnabled" title="Mock 数据" value="恢复初始内容" clickable is-link @click="resetDemo">
           <template #icon><image class="mine-page__cell-icon" :src="journalAsset('icon_24.webp')" mode="aspectFit" /></template>
         </wd-cell>
         <wd-cell
-          v-if="authApi.isDevelopmentLoginEnabled"
+          v-if="isMockDataEnabled"
           title="切换演示身份"
           :value="authApi.getDevelopmentIdentity().nickname"
           label="单设备测试创建者与加入者"

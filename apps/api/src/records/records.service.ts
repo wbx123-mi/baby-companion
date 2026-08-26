@@ -1,4 +1,4 @@
-import type { GrowthRecordContract, RecordType } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract, RecordType } from "@baby-companion/contracts";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ulid } from "ulid";
 import { AppException } from "../common/app.exception";
@@ -24,16 +24,28 @@ export class RecordsService {
         ...(input.type ? { type: input.type } : {}),
         ...(occurredAt ? { occurredAt } : {}),
       },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
+      include: this.recordInclude(userId),
       orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
     });
     return Promise.all(records.map((record) => this.mapRecord(record)));
   }
 
   async getById(userId: string, recordId: string): Promise<GrowthRecordContract> {
-    const record = await this.findActiveRecord(recordId);
+    const record = await this.findActiveRecord(recordId, userId);
     await this.assertFamilyMember(userId, record.familyId);
     return this.mapRecord(record);
+  }
+
+  async sendFlower(userId: string, recordId: string): Promise<GrowthRecordFlowerContract> {
+    const record = await this.findActiveRecord(recordId, userId);
+    await this.assertFamilyMember(userId, record.familyId);
+    await this.prisma.growthRecordFlower.upsert({
+      where: { growthRecordId_userId: { growthRecordId: recordId, userId } },
+      update: {},
+      create: { id: ulid(), growthRecordId: recordId, userId },
+    });
+    const flowerCount = await this.prisma.growthRecordFlower.count({ where: { growthRecordId: recordId } });
+    return { flowerCount, hasFlowered: true };
   }
 
   async create(userId: string, input: CreateRecordDto): Promise<GrowthRecordContract> {
@@ -44,7 +56,7 @@ export class RecordsService {
     if (input.clientRequestId) {
       const existing = await this.prisma.growthRecord.findUnique({
         where: { creatorUserId_clientRequestId: { creatorUserId: userId, clientRequestId: input.clientRequestId } },
-        include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
+        include: this.recordInclude(userId),
       });
       if (existing) return this.mapRecord(existing);
     }
@@ -60,7 +72,7 @@ export class RecordsService {
         occurredAt,
         clientRequestId: input.clientRequestId,
       },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
+      include: this.recordInclude(userId),
     });
     await this.replaceAssets(record.id, context.familyId, input.babyId, userId, input.assetIds || []);
     return this.getById(userId, record.id);
@@ -69,7 +81,7 @@ export class RecordsService {
   async update(userId: string, recordId: string, input: UpdateRecordDto): Promise<GrowthRecordContract> {
     const content = this.requireContent(input.content);
     const occurredAt = this.parseOccurredAt(input.occurredAt);
-    const record = await this.findActiveRecord(recordId);
+    const record = await this.findActiveRecord(recordId, userId);
     await this.assertFamilyMember(userId, record.familyId);
 
     const updated = await this.prisma.growthRecord.updateMany({
@@ -84,7 +96,7 @@ export class RecordsService {
   }
 
   async remove(userId: string, recordId: string, input: DeleteRecordDto): Promise<null> {
-    const record = await this.findActiveRecord(recordId);
+    const record = await this.findActiveRecord(recordId, userId);
     await this.assertFamilyMember(userId, record.familyId);
     const deleted = await this.prisma.growthRecord.updateMany({
       where: { id: recordId, status: "ACTIVE", version: input.version },
@@ -116,10 +128,19 @@ export class RecordsService {
     }
   }
 
-  private async findActiveRecord(recordId: string) {
+  private recordInclude(viewerUserId: string) {
+    return {
+      creator: { select: { id: true, nickname: true, avatarUrl: true } },
+      assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" as const } },
+      flowers: { where: { userId: viewerUserId }, select: { id: true } },
+      _count: { select: { flowers: true } },
+    };
+  }
+
+  private async findActiveRecord(recordId: string, viewerUserId: string) {
     const record = await this.prisma.growthRecord.findFirst({
       where: { id: recordId, status: "ACTIVE" },
-      include: { creator: { select: { id: true, nickname: true, avatarUrl: true } }, assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" } } },
+      include: this.recordInclude(viewerUserId),
     });
     if (!record) throw new AppException("RECORD_NOT_FOUND", "这条记录不存在或已删除", HttpStatus.NOT_FOUND);
     return record;
@@ -158,6 +179,8 @@ export class RecordsService {
     updatedAt: Date;
     creator: { id: string; nickname: string | null; avatarUrl: string | null };
     assets: Array<{ sortOrder: number; mediaAsset: { id: string; category: string; width: number | null; height: number | null; status: string; objectKey: string } }>;
+    flowers: Array<{ id: string }>;
+    _count: { flowers: number };
   }): Promise<GrowthRecordContract> {
     return {
       id: record.id,
@@ -176,6 +199,8 @@ export class RecordsService {
         sortOrder: asset.sortOrder,
         accessUrl: await this.mediaService.getReadUrl(asset.mediaAsset.objectKey),
       }))),
+      flowerCount: record._count.flowers,
+      hasFlowered: record.flowers.length > 0,
       version: record.version,
       createdAt: record.createdAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),

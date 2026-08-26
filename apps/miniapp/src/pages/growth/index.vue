@@ -7,7 +7,7 @@ import GrowthRecordCard from "@/components/GrowthRecordCard.vue";
 import { RECORD_TYPE_OPTIONS } from "@/constants/records";
 import { useAppStore } from "@/stores/app";
 import type { GrowthRecord, RecordType } from "@/types/domain";
-import { formatMonthKey, formatMonthLabel, formatRecordDate } from "@/utils/date";
+import { formatMonthKey, formatMonthLabel } from "@/utils/date";
 import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
@@ -21,20 +21,46 @@ const months = computed(() => {
 });
 
 const timeline = computed(() => {
-  const groups: Array<{ date: string; records: GrowthRecord[] }> = [];
+  const groups: Array<{ key: string; date: string; caption: string; records: GrowthRecord[] }> = [];
   for (const record of store.records) {
-    const date = formatRecordDate(record.occurredAt);
+    const { key, date, caption } = getTimelineDate(record.occurredAt);
     const current = groups[groups.length - 1];
-    if (current?.date === date) current.records.push(record);
-    else groups.push({ date, records: [record] });
+    if (current?.key === key) current.records.push(record);
+    else groups.push({ key, date, caption, records: [record] });
   }
   return groups;
 });
 
-const typeChips = computed(() => [
-  { value: undefined, label: "全部" },
-  ...RECORD_TYPE_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
+const typeChipIcons: Partial<Record<RecordType | "ALL", string>> = {
+  ALL: journalAsset("growth-timeline-webp-assets/04_category_grid.webp"),
+  DAILY: journalAsset("growth-timeline-webp-assets/05_category_home.webp"),
+  FIRST: journalAsset("growth-timeline-webp-assets/06_category_first_star.webp"),
+  FAMILY: journalAsset("growth-timeline-webp-assets/07_category_family.webp"),
+};
+
+const typeChips = computed<Array<{ value?: RecordType; label: string; icon?: string }>>(() => [
+  { value: undefined, label: "全部", icon: typeChipIcons.ALL },
+  ...RECORD_TYPE_OPTIONS.map((item) => ({ value: item.value, label: item.label, icon: typeChipIcons[item.value] })),
 ]);
+
+const timelineMonthLabel = computed(() => {
+  const month = store.filters.month || months.value[0];
+  return month ? `${formatMonthLabel(month)} · 把每个普通日子留住` : "把每个普通日子留住";
+});
+
+function getTimelineDate(iso: string): { key: string; date: string; caption: string } {
+  const date = new Date(iso);
+  const today = new Date();
+  const localRecordDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dayDiff = Math.round((localToday.getTime() - localRecordDate.getTime()) / 86_400_000);
+  const caption = dayDiff === 0 ? "今天" : dayDiff === 1 ? "昨天" : `周${["日", "一", "二", "三", "四", "五", "六"][date.getDay()]}`;
+  return {
+    key: `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+    date: `${date.getMonth() + 1}月${date.getDate()}日`,
+    caption,
+  };
+}
 
 async function initialize(): Promise<void> {
   await store.bootstrap();
@@ -108,7 +134,7 @@ async function handleAction(event: { index: number }): Promise<void> {
 
 <template>
   <view :class="['page-shell', 'growth-page', store.themeClass]">
-    <BabyHero v-if="hasFamily && store.baby" :baby="store.baby" @open-profile="openBabyProfile" />
+    <BabyHero v-if="hasFamily && store.baby" :baby="store.baby" :record-count="store.records.length" @open-profile="openBabyProfile" />
 
     <view v-if="hasFamily" class="growth-page__filters">
       <scroll-view scroll-x class="filter-scroll" :show-scrollbar="false">
@@ -119,6 +145,7 @@ async function handleAction(event: { index: number }): Promise<void> {
             :class="['filter-chip', { 'filter-chip--active': store.filters.type === chip.value }]"
             @click="chooseType(chip.value)"
           >
+            <image v-if="chip.icon" class="filter-chip__icon" :src="chip.icon" mode="aspectFit" />
             {{ chip.label }}
           </view>
         </view>
@@ -149,11 +176,14 @@ async function handleAction(event: { index: number }): Promise<void> {
     </view>
 
     <view v-else-if="hasFamily && timeline.length" class="growth-page__timeline">
-      <view v-for="group in timeline" :key="group.date" class="timeline-group">
-        <view class="timeline-group__date-row">
-          <view class="timeline-group__dot" />
-          <text class="timeline-group__date">{{ group.date }}</text>
+      <text class="growth-page__timeline-note">{{ timelineMonthLabel }}</text>
+      <view class="growth-page__timeline-line" />
+      <view v-for="group in timeline" :key="group.key" class="timeline-group">
+        <view class="timeline-group__date">
+          <text class="timeline-group__day">{{ group.date }}</text>
+          <text class="timeline-group__caption">{{ group.caption }}</text>
         </view>
+        <view class="timeline-group__dot" />
         <view class="timeline-group__records">
           <GrowthRecordCard
             v-for="record in group.records"
@@ -164,6 +194,9 @@ async function handleAction(event: { index: number }): Promise<void> {
             @more="openActions"
           />
         </view>
+      </view>
+      <view class="growth-page__record-action">
+        <wd-button block size="large" @click="createRecord">记下这一刻</wd-button>
       </view>
     </view>
 
@@ -192,7 +225,6 @@ async function handleAction(event: { index: number }): Promise<void> {
     </view>
 
     <view class="safe-bottom-space" />
-    <wd-fab v-if="hasFamily" :expandable="false" :gap="{ bottom: 92, right: 18 }" @click="createRecord" />
     <wd-action-sheet
       v-model="showActions"
       title="记录操作"
@@ -209,11 +241,11 @@ async function handleAction(event: { index: number }): Promise<void> {
   --wot-button-primary-bg-color: var(--color-primary);
   --wot-button-primary-color: var(--color-surface-muted);
   --wot-button-large-height: 76rpx;
-  --wot-button-large-radius: 18rpx;
+  --wot-button-large-radius: 38rpx;
   --wot-button-large-fs: 28rpx;
 
   &__filters {
-    margin-top: 26rpx;
+    margin: 22rpx -4rpx 0;
   }
 
   &__skeleton {
@@ -223,7 +255,29 @@ async function handleAction(event: { index: number }): Promise<void> {
   }
 
   &__timeline {
-    margin-top: 28rpx;
+    position: relative;
+    margin-top: 30rpx;
+  }
+
+  &__timeline-note {
+    display: block;
+    margin: 0 0 24rpx 118rpx;
+    color: var(--color-text-secondary);
+    font-size: 22rpx;
+    letter-spacing: 1rpx;
+  }
+
+  &__timeline-line {
+    position: absolute;
+    top: 66rpx;
+    bottom: 92rpx;
+    left: 104rpx;
+    width: 2rpx;
+    background: var(--color-border);
+  }
+
+  &__record-action {
+    margin: 18rpx 0 4rpx 128rpx;
   }
 
   &__empty {
@@ -287,14 +341,6 @@ async function handleAction(event: { index: number }): Promise<void> {
   }
 }
 
-.growth-heading {
-  display: flex;
-  height: 116rpx;
-  align-items: center;
-  justify-content: center;
-
-}
-
 .filter-scroll {
   width: 100%;
   white-space: nowrap;
@@ -314,22 +360,29 @@ async function handleAction(event: { index: number }): Promise<void> {
 .month-chip {
   flex-shrink: 0;
   color: var(--color-text-secondary);
-  background: rgba(255, 252, 246, 0.9);
-  border: 1rpx solid rgba(165, 139, 117, 0.22);
-  box-shadow: 0 4rpx 12rpx rgba(112, 84, 64, 0.06);
+  background: var(--color-surface-muted);
+  border: 1rpx solid var(--color-border);
+  box-shadow: var(--shadow-card);
 }
 
 .filter-chip {
+  display: flex;
   padding: 14rpx 24rpx;
+  align-items: center;
   border-radius: 999rpx;
   font-size: 24rpx;
+
+  &__icon {
+    width: 30rpx;
+    height: 30rpx;
+    margin-right: 8rpx;
+  }
 
   &--active {
     color: var(--color-surface);
     background: var(--color-primary);
     border-color: var(--color-primary);
     font-weight: 700;
-    box-shadow: 0 6rpx 14rpx rgba(217, 95, 72, 0.2);
   }
 }
 
@@ -346,34 +399,52 @@ async function handleAction(event: { index: number }): Promise<void> {
 }
 
 .timeline-group {
+  position: relative;
+  min-height: 88rpx;
+  padding: 0 0 26rpx 128rpx;
+
   & + & {
-    margin-top: 34rpx;
-  }
-
-  &__date-row {
-    display: flex;
-    margin-bottom: 16rpx;
-    align-items: center;
-  }
-
-  &__dot {
-    width: 14rpx;
-    height: 14rpx;
-    margin: 0 14rpx 0 4rpx;
-    border-radius: 50%;
-    background: var(--color-primary);
-    box-shadow: 0 0 0 8rpx var(--color-primary-soft);
+    margin-top: 12rpx;
   }
 
   &__date {
-    color: var(--color-text-secondary);
+    position: absolute;
+    top: 2rpx;
+    left: 0;
+    display: flex;
+    width: 82rpx;
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  &__day {
+    color: var(--color-text);
     font-size: 24rpx;
-    font-weight: 600;
+    font-weight: 700;
+  }
+
+  &__caption {
+    margin-top: 4rpx;
+    color: var(--color-primary-strong);
+    font-size: 21rpx;
+  }
+
+  &__dot {
+    position: absolute;
+    z-index: 1;
+    top: 8rpx;
+    left: 96rpx;
+    width: 18rpx;
+    height: 18rpx;
+    border: 4rpx solid var(--color-bg);
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 2rpx var(--color-primary-soft);
   }
 
   &__records {
     display: grid;
-    gap: 22rpx;
+    gap: 18rpx;
   }
 }
 </style>

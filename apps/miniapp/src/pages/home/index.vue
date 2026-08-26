@@ -16,22 +16,23 @@ const greeting = computed(() => {
   return "晚上好";
 });
 
-async function refresh(): Promise<void> {
+async function refresh(force = false): Promise<void> {
   refreshing.value = true;
   try {
-    await store.bootstrap(true);
+    await store.bootstrap(force);
   } finally {
     refreshing.value = false;
   }
 }
 
 onShow(() => {
+  // 从 launch 进入时 bootstrap 已就绪，用缓存渲染即可，避免多余请求拉长白屏
   void refresh();
 });
 
 onPullDownRefresh(async () => {
   try {
-    await refresh();
+    await refresh(true);
   } finally {
     uni.stopPullDownRefresh();
   }

@@ -99,6 +99,8 @@ export const mockApi = {
         avatarUrl: runtimeDatabase.user.avatarUrl,
       },
       assets: input.assets.map((asset, index) => ({ ...asset, sortOrder: index })),
+      flowerCount: 0,
+      hasFlowered: false,
       status: "ACTIVE",
       version: 1,
       createdAt: timestamp,

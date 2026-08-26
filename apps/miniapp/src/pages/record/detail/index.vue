@@ -15,6 +15,8 @@ const record = ref<GrowthRecord | null>(null);
 const loading = ref(true);
 const showActions = ref(false);
 const recordId = ref("");
+const flowerSubmitting = ref(false);
+let shouldRefreshAfterEdit = false;
 
 async function loadRecord(): Promise<void> {
   if (!recordId.value) {
@@ -34,15 +36,33 @@ async function loadRecord(): Promise<void> {
 
 onLoad((query) => {
   recordId.value = String(query?.id || "");
+  void loadRecord();
 });
 
 onShow(() => {
+  if (!shouldRefreshAfterEdit) return;
+  shouldRefreshAfterEdit = false;
   void loadRecord();
 });
 
 function editRecord(): void {
   if (!record.value) return;
+  shouldRefreshAfterEdit = true;
   uni.navigateTo({ url: `/pages/record/edit/index?id=${record.value.id}` });
+}
+
+async function sendFlower(): Promise<void> {
+  if (!record.value || record.value.hasFlowered || flowerSubmitting.value) return;
+  flowerSubmitting.value = true;
+  try {
+    const flowerState = await recordsApi.sendFlower(record.value.id);
+    record.value = { ...record.value, ...flowerState };
+    uni.showToast({ title: "小花已送达", icon: "success" });
+  } catch (error) {
+    uni.showToast({ title: error instanceof Error ? error.message : "送花失败，请稍后重试", icon: "none" });
+  } finally {
+    flowerSubmitting.value = false;
+  }
 }
 
 async function deleteRecord(): Promise<void> {
@@ -95,6 +115,24 @@ function goBack(): void {
         <text class="record-detail__text">{{ record.content }}</text>
       </view>
 
+      <view class="surface-card record-detail__flower">
+        <view class="record-detail__flower-copy">
+          <text class="record-detail__flower-title">给这段回忆送一朵小花</text>
+          <text class="record-detail__flower-description">
+            {{ record.flowerCount ? `已有 ${record.flowerCount} 位家人送花` : "成为第一个留下小花的家人" }}
+          </text>
+        </view>
+        <wd-button
+          class="record-detail__flower-action"
+          size="small"
+          :loading="flowerSubmitting"
+          :disabled="record.hasFlowered"
+          @click="sendFlower"
+        >
+          {{ record.hasFlowered ? "🌷 已送花" : "🌷 送小花" }}
+        </wd-button>
+      </view>
+
       <view class="record-detail__meta surface-card">
         <view class="record-detail__meta-row">
           <text>发生时间</text>
@@ -129,7 +167,8 @@ function goBack(): void {
 
 <style scoped lang="scss">
 .record-detail {
-  padding-top: 0;
+  padding-top: 24rpx;
+  background-position: center -2rpx;
 
   &__content {
     display: grid;
@@ -179,6 +218,40 @@ function goBack(): void {
 
   &__story {
     padding: 34rpx;
+  }
+
+  &__flower {
+    display: flex;
+    padding: 26rpx 28rpx;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20rpx;
+  }
+
+  &__flower-copy {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  &__flower-title {
+    color: var(--color-text);
+    font-size: 27rpx;
+    font-weight: 700;
+  }
+
+  &__flower-description {
+    margin-top: 6rpx;
+    color: var(--color-text-secondary);
+    font-size: 22rpx;
+  }
+
+  &__flower-action {
+    flex-shrink: 0;
+    --wot-button-small-height: 58rpx;
+    --wot-button-small-radius: 29rpx;
+    --wot-button-small-fs: 23rpx;
   }
 
   &__text {

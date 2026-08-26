@@ -74,6 +74,8 @@ export interface GrowthRecord {
   occurredAt: string;
   creator: RecordCreator;
   assets: MediaAsset[];
+  flowerCount: number;
+  hasFlowered: boolean;
   status: "ACTIVE";
   version: number;
   createdAt: string;

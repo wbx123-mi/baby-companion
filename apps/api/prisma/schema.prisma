@@ -105,6 +105,7 @@ model User {
   familyMembers   FamilyMember[]
   createdInvites  FamilyInvite[]    @relation("InviteCreator")
   growthRecords   GrowthRecord[]   @relation("RecordCreator")
+  growthRecordFlowers GrowthRecordFlower[] @relation("RecordFlowerUser")
   mediaAssets     MediaAsset[]     @relation("MediaUploader")
   avatarAsset     MediaAsset?      @relation("UserAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   auditLogs       AuditLog[]       @relation("AuditOperator")
@@ -282,6 +283,7 @@ model GrowthRecord {
   baby            Baby                @relation(fields: [babyId], references: [id], onDelete: Restrict)
   creator         User                @relation("RecordCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
   assets          GrowthRecordAsset[]
+  flowers         GrowthRecordFlower[]
   createdAt       DateTime            @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt       DateTime            @updatedAt @map("updated_at") @db.DateTime(3)
 
@@ -289,6 +291,19 @@ model GrowthRecord {
   @@index([babyId, status, occurredAt, id])
   @@index([familyId, status, updatedAt])
   @@map("growth_records")
+}
+
+model GrowthRecordFlower {
+  id             String       @id @db.Char(26)
+  growthRecordId String       @map("growth_record_id") @db.Char(26)
+  userId         String       @map("user_id") @db.Char(26)
+  growthRecord   GrowthRecord @relation(fields: [growthRecordId], references: [id], onDelete: Restrict)
+  user           User         @relation("RecordFlowerUser", fields: [userId], references: [id], onDelete: Restrict)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@unique([growthRecordId, userId])
+  @@index([userId, createdAt])
+  @@map("growth_record_flowers")
 }
 
 model MediaAsset {

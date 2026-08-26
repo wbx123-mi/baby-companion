@@ -1,4 +1,4 @@
-import type { GrowthRecordContract } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract } from "@baby-companion/contracts";
 import { authenticatedRequest } from "./auth-api";
 import type { GrowthRecord, RecordFilters, SaveRecordInput } from "@/types/domain";
 
@@ -65,5 +65,9 @@ export const recordsApi = {
 
   delete(recordId: string, version: number): Promise<null> {
     return authenticatedRequest({ path: `/records/${recordId}`, method: "DELETE", data: { version } });
+  },
+
+  sendFlower(recordId: string): Promise<GrowthRecordFlowerContract> {
+    return authenticatedRequest({ path: `/records/${recordId}/flowers`, method: "POST" });
   },
 };

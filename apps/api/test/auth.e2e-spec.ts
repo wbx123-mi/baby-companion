@@ -31,6 +31,7 @@ describe("authentication and onboarding flow", () => {
       const memberships = await prisma.familyMember.findMany({ where: { userId: { in: userIds } } });
       const familyIds = memberships.map((member) => member.familyId);
       await prisma.$transaction([
+        prisma.growthRecordFlower.deleteMany({ where: { userId: { in: userIds } } }),
         prisma.familyInvite.deleteMany({ where: { familyId: { in: familyIds } } }),
         prisma.idempotencyKey.deleteMany({ where: { userId: { in: userIds } } }),
         prisma.growthRecord.deleteMany({ where: { creatorUserId: { in: userIds } } }),
@@ -145,6 +146,18 @@ describe("authentication and onboarding flow", () => {
         content: "这是一条更新后的真实成长记录。",
       }),
     ]));
+
+    const firstFlower = await request(app.getHttpServer())
+      .post(`/api/v1/records/${createdRecord.body.data.id}/flowers`)
+      .set("authorization", `Bearer ${memberTokens.accessToken}`)
+      .expect(200);
+    expect(firstFlower.body.data).toEqual({ flowerCount: 1, hasFlowered: true });
+
+    const repeatedFlower = await request(app.getHttpServer())
+      .post(`/api/v1/records/${createdRecord.body.data.id}/flowers`)
+      .set("authorization", `Bearer ${memberTokens.accessToken}`)
+      .expect(200);
+    expect(repeatedFlower.body.data).toEqual({ flowerCount: 1, hasFlowered: true });
 
     await request(app.getHttpServer())
       .delete(`/api/v1/records/${createdRecord.body.data.id}`)

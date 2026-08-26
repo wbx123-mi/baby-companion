@@ -1,4 +1,4 @@
-import type { GrowthRecordContract } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract } from "@baby-companion/contracts";
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -27,6 +27,13 @@ export class RecordsController {
   @ApiOperation({ summary: "获取成长记录详情" })
   getById(@CurrentUser() context: AuthContext, @Param("recordId") recordId: string): Promise<GrowthRecordContract> {
     return this.recordsService.getById(context.userId, recordId);
+  }
+
+  @Post(":recordId/flowers")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "给成长记录送一朵小花（每位家人仅计一次）" })
+  sendFlower(@CurrentUser() context: AuthContext, @Param("recordId") recordId: string): Promise<GrowthRecordFlowerContract> {
+    return this.recordsService.sendFlower(context.userId, recordId);
   }
 
   @Post()

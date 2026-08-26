@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Baby } from "@/types/domain";
-import { calculateAgeText, formatBirthText } from "@/utils/date";
+import { calculateAgeText } from "@/utils/date";
 import { journalAsset } from "@/utils/journal-assets";
 
 defineProps<{
   baby: Baby;
+  recordCount: number;
 }>();
 
 defineEmits<{
@@ -14,35 +15,30 @@ defineEmits<{
 
 <template>
   <view class="baby-hero" @click="$emit('open-profile')">
-    <image class="baby-hero__background" :src="journalAsset('card-bg.webp')" mode="scaleToFill" />
-    <image class="baby-hero__moon" :src="journalAsset('03_moon_stars.webp')" mode="aspectFit" />
-    <view class="baby-hero__top">
+    <image class="baby-hero__background" :src="journalAsset('growth-profile-card-components/profile-card-background.webp')" mode="scaleToFill" />
+    <image class="baby-hero__tape" :src="journalAsset('growth-profile-card-components/pink-dotted-tape.webp')" mode="aspectFit" />
+    <image class="baby-hero__leaf" :src="journalAsset('growth-profile-card-components/leaf-sprig.webp')" mode="aspectFit" />
+    <view class="baby-hero__profile">
       <view class="baby-hero__avatar">
+        <image class="baby-hero__avatar-frame" :src="journalAsset('growth-profile-card-components/avatar-frame.webp')" mode="aspectFit" />
         <image v-if="baby.avatarUrl" class="baby-hero__avatar-image" :src="baby.avatarUrl" mode="aspectFill" />
         <text v-else>👶🏻</text>
       </view>
       <view class="baby-hero__identity">
-        <view class="baby-hero__name-row">
-          <text class="baby-hero__name">{{ baby.nickname }}</text>
-          <text class="baby-hero__arrow">档案 ›</text>
-        </view>
-        <text class="baby-hero__birth">{{ formatBirthText(baby.birthDate, baby.birthTime) }}出生</text>
+        <text class="baby-hero__name">{{ baby.nickname }}</text>
+        <text class="baby-hero__summary">出生{{ calculateAgeText(baby.birthDate) }} · {{ recordCount }} 条成长故事</text>
+        <text class="baby-hero__arrow">查看档案 ›</text>
       </view>
     </view>
-    <view class="baby-hero__age">
-      <text class="baby-hero__age-label">今天是</text>
-      <text class="baby-hero__age-value">{{ calculateAgeText(baby.birthDate) }}</text>
-    </view>
-    <text class="baby-hero__intro">{{ baby.introduction || "把每个普通日子，慢慢写成成长故事。" }}</text>
   </view>
 </template>
 
 <style scoped lang="scss">
 .baby-hero {
   position: relative;
-  min-height: 400rpx;
-  margin: 0 -14rpx;
-  padding: 72rpx 64rpx 46rpx 72rpx;
+  min-height: 258rpx;
+  margin: 8rpx -2rpx 0;
+  padding: 62rpx 54rpx 46rpx;
   overflow: hidden;
   background-color: transparent;
 
@@ -58,56 +54,72 @@ defineEmits<{
     pointer-events: none;
   }
 
-  &__moon {
+  &__tape {
     position: absolute;
     z-index: 1;
-    top: 88rpx;
-    right: 50rpx;
-    width: 104rpx;
-    height: 110rpx;
+    top: 4rpx;
+    right: 42rpx;
+    width: 122rpx;
+    height: 72rpx;
+    transform: rotate(10deg);
   }
 
-  &__top,
-  &__name-row,
-  &__age {
+  &__leaf {
+    position: absolute;
+    z-index: 1;
+    right: 54rpx;
+    bottom: 44rpx;
+    width: 92rpx;
+    height: 92rpx;
+  }
+
+  &__profile {
     display: flex;
     align-items: center;
   }
 
-  &__top,
-  &__age,
-  &__intro {
+  &__profile {
     position: relative;
     z-index: 1;
   }
 
   &__avatar {
     display: flex;
-    width: 96rpx;
-    height: 96rpx;
+    position: relative;
+    width: 122rpx;
+    height: 122rpx;
     overflow: hidden;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border: 5rpx solid var(--color-surface);
+    border: 0;
     border-radius: 50%;
     background: var(--color-primary-soft);
     font-size: 44rpx;
-    box-shadow: 0 6rpx 18rpx rgba(130, 83, 58, 0.1);
+  }
+
+  &__avatar-frame {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
 
   &__avatar-image {
-    width: 100%;
-    height: 100%;
+    position: relative;
+    z-index: 1;
+    width: 102rpx;
+    height: 102rpx;
+    border-radius: 50%;
   }
 
   &__identity {
     min-width: 0;
-    margin-left: 20rpx;
-  }
-
-  &__name-row {
-    gap: 12rpx;
+    display: flex;
+    margin-left: 28rpx;
+    flex-direction: column;
   }
 
   &__name {
@@ -116,47 +128,17 @@ defineEmits<{
     font-weight: 800;
   }
 
+  &__summary {
+    display: block;
+    margin-top: 10rpx;
+    color: var(--color-text-secondary);
+    font-size: 24rpx;
+  }
+
   &__arrow {
-    padding: 6rpx 14rpx;
-    border-radius: 18rpx;
-    color: var(--color-primary-strong);
-    background: var(--color-primary-soft);
-    font-size: 20rpx;
-  }
-
-  &__birth {
-    display: block;
-    margin-top: 6rpx;
-    color: var(--color-text-secondary);
-    font-size: 22rpx;
-  }
-
-  &__age {
-    margin-top: 24rpx;
-    padding-top: 20rpx;
-    align-items: baseline;
-    justify-content: center;
-    border-top: 1rpx solid rgba(127, 116, 110, 0.18);
-  }
-
-  &__age-label {
-    color: var(--color-text-secondary);
-    font-size: 22rpx;
-  }
-
-  &__age-value {
-    margin-left: 10rpx;
-    color: var(--color-primary-strong);
-    font-size: 38rpx;
-    font-weight: 800;
-  }
-
-  &__intro {
-    display: block;
     margin-top: 12rpx;
-    color: var(--color-text-secondary);
-    font-size: 22rpx;
-    text-align: center;
+    color: var(--color-primary-strong);
+    font-size: 21rpx;
   }
 }
 </style>

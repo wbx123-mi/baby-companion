@@ -131,14 +131,14 @@ async function submit(): Promise<void> {
                 :src="member.avatarUrl"
                 mode="aspectFill"
               />
-              <image v-else class="family-profile__member-icon" src="/static/journal/icon_47.webp" mode="aspectFit" />
+              <image v-else class="family-profile__member-icon" :src="journalAsset('icon_47.webp')" mode="aspectFit" />
             </view>
           </template>
         </wd-cell>
       </wd-cell-group>
       <wd-skeleton v-else-if="membersLoading" theme="paragraph" animation="gradient" :row-col="[1, 1]" />
       <view v-else class="family-profile__members-empty">
-        <image class="family-profile__members-empty-icon" src="/static/journal/icon_47.webp" mode="aspectFit" />
+        <image class="family-profile__members-empty-icon" :src="journalAsset('icon_47.webp')" mode="aspectFit" />
         <text>暂时没有可显示的家庭成员</text>
       </view>
     </view>

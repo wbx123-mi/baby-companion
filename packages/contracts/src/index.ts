@@ -51,9 +51,16 @@ export interface GrowthRecordContract {
   occurredAt: string;
   creator: UserContract;
   assets: MediaAssetContract[];
+  flowerCount: number;
+  hasFlowered: boolean;
   version: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GrowthRecordFlowerContract {
+  flowerCount: number;
+  hasFlowered: boolean;
 }
 
 export interface BootstrapContract {
