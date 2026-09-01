@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useAppStore } from "@/stores/app";
 import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
+const launchStatus = ref("正在连接家庭空间…");
 
 // 背景图走 journalAsset，支持远程地址配置；深色模式不设背景
 const launchBgStyle = computed(() =>
@@ -14,23 +15,29 @@ const launchBgStyle = computed(() =>
 
 onMounted(async () => {
   try {
+    launchStatus.value = "正在读取成长簿…";
     const [data] = await Promise.all([
       store.bootstrap(),
       new Promise((resolve) => setTimeout(resolve, 900)),
     ]);
 
     if (data.nextAction === "ENTER_APP" || data.nextAction === "NO_FAMILY") {
-      // 预加载首页，让首页在 switchTab 前就开始实例化，减少首次切 tab 的白屏
-      try {
-        uni.preloadPage({ url: "/pages/home/index" });
-      } catch {
-        // 基础库不支持预加载时静默降级，不影响跳转
-      }
-      uni.switchTab({ url: "/pages/home/index" });
+      launchStatus.value = "正在打开成长簿…";
+      uni.switchTab({
+        url: "/pages/home/index",
+        fail(error) {
+          console.error("[launch] switchTab failed", error);
+          launchStatus.value = "首页打开失败，正在进入诊断页…";
+          setTimeout(() => uni.redirectTo({ url: "/pages/common/unavailable/index" }), 900);
+        },
+      });
       return;
     }
+    launchStatus.value = "家庭状态异常，正在进入诊断页…";
     uni.redirectTo({ url: "/pages/common/unavailable/index" });
-  } catch {
+  } catch (error) {
+    console.error("[launch] bootstrap failed", error);
+    launchStatus.value = "连接失败，正在进入诊断页…";
     uni.redirectTo({ url: "/pages/common/unavailable/index" });
   }
 });
@@ -50,6 +57,7 @@ onMounted(async () => {
         <view class="launch-page__progress-dot" />
         <view class="launch-page__progress-dot" />
       </view>
+      <text class="launch-page__status">{{ launchStatus }}</text>
     </view>
   </view>
 </template>
@@ -85,6 +93,14 @@ onMounted(async () => {
     align-items: center;
     gap: 22rpx;
     animation: launch-progress-in 360ms 160ms ease-out both;
+  }
+
+  &__status {
+    display: block;
+    margin-top: 22rpx;
+    color: var(--color-text-secondary);
+    font-size: 24rpx;
+    letter-spacing: 1rpx;
   }
 
   &__progress-dot {
