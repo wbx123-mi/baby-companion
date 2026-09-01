@@ -13,6 +13,6 @@ export class ProfilesController {
   constructor(private readonly profiles: ProfilesService) {}
   @Put("families/:familyId") @ApiOperation({ summary: "更新家庭名称（仅管理员）" })
   updateFamily(@CurrentUser() context: AuthContext, @Param("familyId") familyId: string, @Body() input: UpdateFamilyDto): Promise<FamilySummaryContract> { return this.profiles.updateFamily(context.userId, familyId, input); }
-  @Put("babies/:babyId") @ApiOperation({ summary: "更新宝宝档案" })
+  @Put("babies/:babyId") @ApiOperation({ summary: "更新宝宝档案（仅管理员）" })
   updateBaby(@CurrentUser() context: AuthContext, @Param("babyId") babyId: string, @Body() input: UpdateBabyDto): Promise<BabyContract> { return this.profiles.updateBaby(context.userId, babyId, input); }
 }

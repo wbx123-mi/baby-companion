@@ -15,6 +15,11 @@ const message = useMessage();
 const showActions = ref(false);
 const selectedRecord = ref<GrowthRecord | null>(null);
 const hasFamily = computed(() => Boolean(store.family && store.baby));
+const isFamilyAdmin = computed(() => store.family?.role === "ADMIN");
+
+function canManageRecord(record: GrowthRecord): boolean {
+  return isFamilyAdmin.value || record.creator.id === store.user?.id;
+}
 
 const months = computed(() => {
   return [...new Set(store.records.map((record) => formatMonthKey(record.occurredAt)))];
@@ -190,6 +195,7 @@ async function handleAction(event: { index: number }): Promise<void> {
             :key="record.id"
             :record="record"
             :birth-date="store.baby?.birthDate || ''"
+            :can-manage="canManageRecord(record)"
             @open="openRecord"
             @more="openActions"
           />

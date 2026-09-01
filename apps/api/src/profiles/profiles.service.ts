@@ -25,8 +25,11 @@ export class ProfilesService {
     if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) throw new AppException("INVALID_BIRTH_DATE", "出生日期不正确", HttpStatus.BAD_REQUEST);
     const baby = await this.prisma.baby.findFirst({ where: { id: babyId, status: "ACTIVE", family: { status: "ACTIVE" } } });
     if (!baby) throw new AppException("BABY_NOT_FOUND", "宝宝档案不存在", HttpStatus.NOT_FOUND);
-    const membership = await this.prisma.familyMember.findFirst({ where: { userId, familyId: baby.familyId, status: "ACTIVE" }, select: { id: true } });
-    if (!membership) throw new AppException("FAMILY_ACCESS_DENIED", "你还没有加入这个家庭", HttpStatus.FORBIDDEN);
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { userId, familyId: baby.familyId, status: "ACTIVE", role: "ADMIN" },
+      select: { id: true },
+    });
+    if (!membership) throw new AppException("FAMILY_ADMIN_REQUIRED", "仅家庭管理员可以修改宝宝档案", HttpStatus.FORBIDDEN);
     const birthTime = input.birthTime ? new Date(`1970-01-01T${input.birthTime.length === 5 ? `${input.birthTime}:00` : input.birthTime}.000Z`) : null;
     const updated = await this.prisma.baby.updateMany({ where: { id: babyId, version: input.version }, data: { nickname: input.nickname.trim(), birthDate, birthTime, timezone: input.timezone, gender: input.gender, introduction: input.introduction?.trim() || null, version: { increment: 1 } } });
     if (updated.count !== 1) throw new AppException("BABY_VERSION_CONFLICT", "宝宝档案已被其他家人修改，请刷新后重试", HttpStatus.CONFLICT);

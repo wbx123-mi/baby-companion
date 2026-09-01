@@ -63,6 +63,7 @@ export class MediaService {
     });
     if (!baby) throw new AppException("BABY_NOT_FOUND", "宝宝档案不存在", HttpStatus.NOT_FOUND);
     await this.assertFamilyMember(userId, baby.familyId);
+    if (input.target === "BABY") await this.assertFamilyAdmin(userId, baby.familyId);
 
     const id = ulid();
     const extension = input.mimeType.split("/")[1];
@@ -118,6 +119,7 @@ export class MediaService {
     });
     if (!asset) throw new AppException("MEDIA_ASSET_NOT_FOUND", "头像上传任务不存在或已失效", HttpStatus.NOT_FOUND);
     await this.assertFamilyMember(userId, asset.familyId);
+    if (asset.category === "BABY_AVATAR") await this.assertFamilyAdmin(userId, asset.familyId);
     try {
       await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: asset.objectKey }));
     } catch {
@@ -152,5 +154,13 @@ export class MediaService {
   private async assertFamilyMember(userId: string, familyId: string): Promise<void> {
     const membership = await this.prisma.familyMember.findFirst({ where: { userId, familyId, status: "ACTIVE", family: { status: "ACTIVE" } }, select: { id: true } });
     if (!membership) throw new AppException("FAMILY_ACCESS_DENIED", "你还没有加入这个家庭", HttpStatus.FORBIDDEN);
+  }
+
+  private async assertFamilyAdmin(userId: string, familyId: string): Promise<void> {
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { userId, familyId, status: "ACTIVE", role: "ADMIN", family: { status: "ACTIVE" } },
+      select: { id: true },
+    });
+    if (!membership) throw new AppException("FAMILY_ADMIN_REQUIRED", "仅家庭管理员可以修改宝宝头像", HttpStatus.FORBIDDEN);
   }
 }

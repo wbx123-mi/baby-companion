@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useAppStore } from "@/stores/app";
 import { mediaApi } from "@/api/media-api";
@@ -9,6 +9,7 @@ import { toDateValue } from "@/utils/date";
 const store = useAppStore();
 const saving = ref(false);
 const avatarUploading = ref(false);
+const isFamilyAdmin = computed(() => store.family?.role === "ADMIN");
 const form = reactive({
   nickname: "",
   birthDate: Date.now(),
@@ -31,6 +32,10 @@ onLoad(async () => {
 });
 
 async function submit(): Promise<void> {
+  if (!isFamilyAdmin.value) {
+    uni.showToast({ title: "仅家庭管理员可以修改宝宝档案", icon: "none" });
+    return;
+  }
   if (!form.nickname.trim()) {
     uni.showToast({ title: "请填写宝宝昵称", icon: "none" });
     return;
@@ -57,6 +62,10 @@ async function submit(): Promise<void> {
 }
 
 async function changeAvatar(): Promise<void> {
+  if (!isFamilyAdmin.value) {
+    uni.showToast({ title: "仅家庭管理员可以修改宝宝头像", icon: "none" });
+    return;
+  }
   const baby = store.baby;
   if (!baby) return;
   try {
@@ -82,14 +91,14 @@ async function changeAvatar(): Promise<void> {
       <view class="baby-profile__avatar" @click="changeAvatar">
         <image v-if="store.baby?.avatarUrl" class="baby-profile__avatar-image" :src="store.baby.avatarUrl" mode="aspectFill" />
         <text v-else>👶🏻</text>
-        <text class="baby-profile__avatar-action">{{ avatarUploading ? "上传中" : "换头像" }}</text>
+        <text class="baby-profile__avatar-action">{{ avatarUploading ? "上传中" : isFamilyAdmin ? "换头像" : "仅管理员可修改" }}</text>
       </view>
-      <text class="baby-profile__avatar-hint">点击头像更换，选择后自动保存</text>
+      <text class="baby-profile__avatar-hint">{{ isFamilyAdmin ? "点击头像更换，选择后自动保存" : "宝宝档案由家庭管理员维护" }}</text>
       <text class="baby-profile__name">{{ form.nickname || "宝宝" }}</text>
     </view>
 
     <view class="surface-card baby-profile__form">
-      <wd-input v-model="form.nickname" label="宝宝昵称" placeholder="例如：宝宝" required clearable />
+      <wd-input v-model="form.nickname" label="宝宝昵称" placeholder="例如：宝宝" required clearable :disabled="!isFamilyAdmin" />
       <wd-datetime-picker
         v-model="form.birthDate"
         type="date"
@@ -98,6 +107,7 @@ async function changeAvatar(): Promise<void> {
         :min-date="new Date(2020, 0, 1).getTime()"
         :max-date="Date.now()"
         required
+        :disabled="!isFamilyAdmin"
       />
       <wd-datetime-picker
         v-model="form.birthTime"
@@ -106,10 +116,11 @@ async function changeAvatar(): Promise<void> {
         title="选择出生时间"
         placeholder="可以不填"
         clearable
+        :disabled="!isFamilyAdmin"
       />
       <view class="baby-profile__gender">
         <text class="baby-profile__label">性别</text>
-        <wd-radio-group v-model="form.gender" shape="button" inline>
+        <wd-radio-group v-model="form.gender" shape="button" inline :disabled="!isFamilyAdmin">
           <wd-radio value="MALE">男孩</wd-radio>
           <wd-radio value="FEMALE">女孩</wd-radio>
           <wd-radio value="UNSPECIFIED">暂不设置</wd-radio>
@@ -122,11 +133,12 @@ async function changeAvatar(): Promise<void> {
         :maxlength="200"
         show-word-limit
         auto-height
+        :disabled="!isFamilyAdmin"
       />
     </view>
 
     <view class="baby-profile__actions">
-      <wd-button block size="large" :loading="saving" @click="submit">保存宝宝档案</wd-button>
+      <wd-button block size="large" :loading="saving" :disabled="!isFamilyAdmin" @click="submit">保存宝宝档案</wd-button>
     </view>
   </view>
 </template>

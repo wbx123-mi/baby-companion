@@ -82,7 +82,7 @@ export class RecordsService {
     const content = this.requireContent(input.content);
     const occurredAt = this.parseOccurredAt(input.occurredAt);
     const record = await this.findActiveRecord(recordId, userId);
-    await this.assertFamilyMember(userId, record.familyId);
+    await this.assertRecordManager(userId, record.familyId, record.creatorUserId);
 
     const updated = await this.prisma.growthRecord.updateMany({
       where: { id: recordId, status: "ACTIVE", version: input.version },
@@ -97,7 +97,7 @@ export class RecordsService {
 
   async remove(userId: string, recordId: string, input: DeleteRecordDto): Promise<null> {
     const record = await this.findActiveRecord(recordId, userId);
-    await this.assertFamilyMember(userId, record.familyId);
+    await this.assertRecordManager(userId, record.familyId, record.creatorUserId);
     const deleted = await this.prisma.growthRecord.updateMany({
       where: { id: recordId, status: "ACTIVE", version: input.version },
       data: { status: "DELETED", deletedAt: new Date(), version: { increment: 1 } },
@@ -128,9 +128,30 @@ export class RecordsService {
     }
   }
 
+  /** 记录由创建者维护；家庭管理员保留处理误发内容的兜底权限。 */
+  private async assertRecordManager(userId: string, familyId: string, creatorUserId: string): Promise<void> {
+    const membership = await this.prisma.familyMember.findFirst({
+      where: { userId, familyId, status: "ACTIVE", family: { status: "ACTIVE" } },
+      select: { role: true },
+    });
+    if (!membership) {
+      throw new AppException("FAMILY_ACCESS_DENIED", "你还没有加入这个家庭", HttpStatus.FORBIDDEN);
+    }
+    if (creatorUserId !== userId && membership.role !== "ADMIN") {
+      throw new AppException("RECORD_EDIT_FORBIDDEN", "仅记录人或家庭管理员可以编辑、删除这条记录", HttpStatus.FORBIDDEN);
+    }
+  }
+
   private recordInclude(viewerUserId: string) {
     return {
-      creator: { select: { id: true, nickname: true, avatarUrl: true } },
+      creator: {
+        select: {
+          id: true,
+          nickname: true,
+          avatarUrl: true,
+          avatarAsset: { select: { objectKey: true, status: true } },
+        },
+      },
       assets: { include: { mediaAsset: true }, orderBy: { sortOrder: "asc" as const } },
       flowers: { where: { userId: viewerUserId }, select: { id: true } },
       _count: { select: { flowers: true } },
@@ -171,13 +192,19 @@ export class RecordsService {
     id: string;
     familyId: string;
     babyId: string;
+    creatorUserId: string;
     type: RecordType;
     content: string;
     occurredAt: Date;
     version: number;
     createdAt: Date;
     updatedAt: Date;
-    creator: { id: string; nickname: string | null; avatarUrl: string | null };
+    creator: {
+      id: string;
+      nickname: string | null;
+      avatarUrl: string | null;
+      avatarAsset: { objectKey: string; status: string } | null;
+    };
     assets: Array<{ sortOrder: number; mediaAsset: { id: string; category: string; width: number | null; height: number | null; status: string; objectKey: string } }>;
     flowers: Array<{ id: string }>;
     _count: { flowers: number };
@@ -189,7 +216,13 @@ export class RecordsService {
       type: record.type,
       content: record.content,
       occurredAt: record.occurredAt.toISOString(),
-      creator: record.creator,
+      creator: {
+        id: record.creator.id,
+        nickname: record.creator.nickname,
+        avatarUrl: record.creator.avatarAsset?.status === "READY"
+          ? await this.mediaService.getReadUrl(record.creator.avatarAsset.objectKey)
+          : record.creator.avatarUrl,
+      },
       assets: await Promise.all(record.assets.map(async (asset) => ({
         id: asset.mediaAsset.id,
         category: "IMAGE",

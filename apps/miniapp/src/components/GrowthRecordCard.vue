@@ -8,6 +8,7 @@ import { journalAsset } from "@/utils/journal-assets";
 const props = defineProps<{
   record: GrowthRecord;
   birthDate: string;
+  canManage?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -52,7 +53,7 @@ const recordTypeIcons: Record<RecordType, string> = {
               <image class="record-card__time-icon" :src="journalAsset('growth-timeline-webp-assets/10_clock.webp')" mode="aspectFit" />
               <text>{{ formatRecordTime(record.occurredAt) }}</text>
             </view>
-            <view class="record-card__more" @click.stop="emit('more', record)">···</view>
+            <view v-if="canManage" class="record-card__more" @click.stop="emit('more', record)">···</view>
           </view>
         </view>
       </template>
@@ -68,7 +69,20 @@ const recordTypeIcons: Record<RecordType, string> = {
       <template #footer>
         <view class="record-card__footer">
           <view class="record-card__author">
-            <view class="record-card__author-avatar-slot" />
+            <view class="record-card__author-avatar-slot">
+              <image
+                v-if="record.creator.avatarUrl"
+                class="record-card__author-avatar"
+                :src="record.creator.avatarUrl"
+                mode="aspectFill"
+              />
+              <image
+                v-else
+                class="record-card__author-avatar-placeholder"
+                :src="journalAsset('icon_47.webp')"
+                mode="aspectFit"
+              />
+            </view>
             <text>{{ record.creator.nickname }}记录</text>
           </view>
           <view class="record-card__footer-right">
@@ -247,12 +261,17 @@ const recordTypeIcons: Record<RecordType, string> = {
     width: 38rpx;
     height: 38rpx;
     flex-shrink: 0;
+    overflow: hidden;
     border-radius: 50%;
-  }
-
-  &__author-avatar-slot {
     background: var(--color-surface-muted);
     border: 1rpx solid var(--color-border);
+  }
+
+  &__author-avatar,
+  &__author-avatar-placeholder {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   &__flowers {

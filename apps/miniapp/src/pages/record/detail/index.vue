@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import { useMessage } from "wot-design-uni/components/wd-message-box/index";
 import { recordsApi } from "@/api/records-api";
@@ -17,6 +17,9 @@ const showActions = ref(false);
 const recordId = ref("");
 const flowerSubmitting = ref(false);
 let shouldRefreshAfterEdit = false;
+const canManageRecord = computed(() => Boolean(
+  record.value && (store.family?.role === "ADMIN" || record.value.creator.id === store.user?.id),
+));
 
 async function loadRecord(): Promise<void> {
   if (!recordId.value) {
@@ -106,7 +109,7 @@ function goBack(): void {
             {{ calculateAgeText(store.baby?.birthDate || '', record.occurredAt) }}
           </text>
         </view>
-        <view class="record-detail__more" @click="showActions = true">···</view>
+        <view v-if="canManageRecord" class="record-detail__more" @click="showActions = true">···</view>
       </view>
 
       <MediaGallery v-if="record.assets.length" :assets="record.assets" previewable />
@@ -155,6 +158,7 @@ function goBack(): void {
     </view>
 
     <wd-action-sheet
+      v-if="canManageRecord"
       v-model="showActions"
       title="记录操作"
       cancel-text="取消"

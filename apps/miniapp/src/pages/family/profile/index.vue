@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import type { FamilyInviteContract, FamilyMemberContract } from "@baby-companion/contracts";
 import { authApi } from "@/api/auth-api";
@@ -13,6 +13,7 @@ const inviteLoading = ref(false);
 const invite = ref<FamilyInviteContract | null>(null);
 const membersLoading = ref(false);
 const members = ref<FamilyMemberContract[]>([]);
+const isFamilyAdmin = computed(() => store.family?.role === "ADMIN");
 
 onLoad(async () => {
   await store.bootstrap();
@@ -102,7 +103,7 @@ async function submit(): Promise<void> {
         <text class="family-profile__section-title">小家资料</text>
         <text class="family-profile__section-note">记录属于你们的小家</text>
       </view>
-      <wd-input v-model="familyName" label="家庭名称" placeholder="例如：宝宝的家" required clearable />
+      <wd-input v-model="familyName" label="家庭名称" placeholder="例如：宝宝的家" required clearable :disabled="!isFamilyAdmin" />
       <wd-cell title="我的角色" :value="store.family?.role === 'ADMIN' ? '管理员' : '家庭成员'" />
       <wd-cell title="家庭成员" :value="membersLoading ? '加载中…' : `${members.length} 人`" />
     </view>
@@ -143,7 +144,7 @@ async function submit(): Promise<void> {
       </view>
     </view>
 
-    <view v-if="store.family?.role === 'ADMIN'" class="surface-card family-profile__invite">
+    <view v-if="isFamilyAdmin" class="surface-card family-profile__invite">
       <image class="family-profile__invite-tape" :src="journalAsset('icon_35.webp')" mode="aspectFit" />
       <view class="family-profile__invite-heading">
         <view>
@@ -172,7 +173,7 @@ async function submit(): Promise<void> {
     </view>
 
     <view class="family-profile__actions">
-      <wd-button block size="large" :loading="saving" @click="submit">保存家庭信息</wd-button>
+      <wd-button block size="large" :loading="saving" :disabled="!isFamilyAdmin" @click="submit">保存家庭信息</wd-button>
     </view>
   </view>
 </template>
