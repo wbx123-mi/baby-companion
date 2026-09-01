@@ -12,7 +12,7 @@
     "dev:mp-weixin:remote-real": "uni -p mp-weixin --mode remote-real",
     "build:h5": "uni build",
     "build:mp-weixin": "pnpm build:mp-weixin:production",
-    "build:mp-weixin:production": "uni build -p mp-weixin --mode production",
+    "build:mp-weixin:production": "uni build -p mp-weixin --mode production && node ../../scripts/miniapp-release.mjs prepare",
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {

@@ -101,3 +101,64 @@ miniapp/journal/v1/story11.webp
 - 默认头像和加载兜底图 `icon_47.webp`。
 
 远程公共素材可以设置长期缓存；发布同名文件的新版本时，优先升级路径中的版本号（例如 `v1` 改为 `v2`），避免客户端继续命中旧缓存。
+
+## 小程序发布记录
+
+生产构建统一执行：
+
+```bash
+pnpm build:miniapp:production
+```
+
+构建成功后会生成本地待发布凭证 `.release/miniapp-pending.json`。该凭证只表示生产包已经构建，不表示已经上传或上线。通过微信开发者工具上传并在微信后台完成发布后，执行：
+
+```bash
+pnpm release:confirm:miniapp <微信版本号> <experience|production> [备注]
+```
+
+确认命令会把版本、渠道、Git Commit、构建时间、发布时间以及工作区是否包含未提交改动写入 `docs/deployment-history.md`。可通过 `pnpm release:status:miniapp` 查看最近一次构建或发布状态。
+
+## 数据库迁移记录
+
+生产数据库采用 Prisma migration 作为标准台账。任何数据库变更前先执行只读计划：
+
+```bash
+pnpm release:plan:db
+pnpm release:status:db
+```
+
+计划会通过 SSH 只读检查生产库，记录本地 migration 的 SHA-256、生产 `_prisma_migrations` 状态以及关键 Schema 是否存在，并写入本地 `.release/db-plan.json`。它不会备份、建表或修改生产数据库。
+
+标准迁移链为：
+
+```text
+20260809000000_init
+→ 20260809010000_add_profile_avatars
+→ 20260822000000_add_growth_record_flowers
+```
+
+早期重复的 `20260807042711_init` 和 `20260807135436_family_invites` 已移入 `apps/api/prisma/migrations-archive`，只保留为历史证据。
+
+当前生产库已有上述最终 Schema，但尚无 `_prisma_migrations` 台账。首次切换标准迁移前必须：备份生产库、核对计划状态为 `BASELINE_REQUIRED`、使用 Prisma `migrate resolve --applied` 登记三条现有 migration，重新执行只读计划确认状态为 `READY`。此 baseline 属于生产写操作，必须单独确认后执行。
+
+## 线上健康检查与告警
+
+生产 Compose 为 API、MySQL、MinIO 都配置了容器健康检查，并设置了进程数上限：API 160、MySQL 256、MinIO 128。当前 2GiB ECS 上的 MySQL 和 MinIO 已有较高正常常驻内存，因此不设置过紧的硬内存上限，避免服务在正常波动时被错误杀掉。健康检查会让 `docker compose ps` 直接显示服务状态，但不会在宿主机完全卡死时自动重启 ECS。
+
+每次部署后执行：
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+curl -fsS http://127.0.0.1:3000/api/v1/health/ready
+```
+
+为发现“整机或 Docker 无响应”这类容器内无法自救的故障，需要在阿里云控制台配置外部探测：
+
+1. 进入 `云监控 → 站点监控 → 创建任务`，探测类型选择 HTTPS。
+2. 分别创建两个任务：
+   - `https://api.baobao365.top/api/v1/health/ready`，预期 HTTP 状态 `200`。
+   - `https://static.baobao365.top/miniapp/journal/v1/growth-card-transparent.webp`，预期 HTTP 状态 `200`。
+3. 将连续失败 3 次设为告警条件，并绑定你的短信、电话或钉钉/邮件通知联系人。
+
+这样即使 ECS、Docker 和 SSH 同时无响应，也能从服务器外部及时发现故障。告警联系人和阿里云账号权限属于控制台私有配置，不能写入代码仓库。
