@@ -1,4 +1,5 @@
-import type { GrowthRecordContract, GrowthRecordFlowerContract, RecordType } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract, GrowthRecordPageContract, RecordType } from "@baby-companion/contracts";
+import type { Prisma } from "../generated/prisma/client";
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { ulid } from "ulid";
 import { AppException } from "../common/app.exception";
@@ -11,6 +12,8 @@ import type { UpdateRecordDto } from "./dto/update-record.dto";
 
 @Injectable()
 export class RecordsService {
+  private static readonly PAGE_SIZE = 10;
+
   constructor(private readonly prisma: PrismaService, private readonly mediaService: MediaService) {}
 
   async list(userId: string, input: ListRecordsDto): Promise<GrowthRecordContract[]> {
@@ -28,6 +31,54 @@ export class RecordsService {
       orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
     });
     return Promise.all(records.map((record) => this.mapRecord(record)));
+  }
+
+  async listPage(userId: string, input: ListRecordsDto): Promise<GrowthRecordPageContract> {
+    const context = await this.getBabyContext(userId, input.babyId);
+    const occurredAt = input.month ? this.getMonthRange(input.month) : undefined;
+    const baseWhere: Prisma.GrowthRecordWhereInput = {
+      familyId: context.familyId,
+      babyId: input.babyId,
+      status: "ACTIVE",
+      ...(input.type ? { type: input.type } : {}),
+      ...(occurredAt ? { occurredAt } : {}),
+    };
+    const cursor = input.cursor ? this.decodeCursor(input.cursor) : null;
+    const pageWhere: Prisma.GrowthRecordWhereInput = cursor ? {
+      ...baseWhere,
+      AND: [{
+        OR: [
+          { occurredAt: { lt: cursor.occurredAt } },
+          { occurredAt: cursor.occurredAt, id: { lt: cursor.id } },
+        ],
+      }],
+    } : baseWhere;
+    const monthFacetWhere: Prisma.GrowthRecordWhereInput = {
+      familyId: context.familyId,
+      babyId: input.babyId,
+      status: "ACTIVE",
+      ...(input.type ? { type: input.type } : {}),
+    };
+    const [rows, total, monthRows] = await Promise.all([
+      this.prisma.growthRecord.findMany({
+        where: pageWhere,
+        include: this.recordInclude(userId),
+        orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
+        take: RecordsService.PAGE_SIZE + 1,
+      }),
+      this.prisma.growthRecord.count({ where: baseWhere }),
+      this.prisma.growthRecord.findMany({ where: monthFacetWhere, select: { occurredAt: true }, orderBy: { occurredAt: "desc" } }),
+    ]);
+    const hasMore = rows.length > RecordsService.PAGE_SIZE;
+    const pageRows = rows.slice(0, RecordsService.PAGE_SIZE);
+    const last = pageRows[pageRows.length - 1];
+    return {
+      items: await Promise.all(pageRows.map((record) => this.mapRecord(record))),
+      nextCursor: hasMore && last ? this.encodeCursor(last.occurredAt, last.id) : null,
+      hasMore,
+      total,
+      availableMonths: [...new Set(monthRows.map(({ occurredAt: value }) => value.toISOString().slice(0, 7)))],
+    };
   }
 
   async getById(userId: string, recordId: string): Promise<GrowthRecordContract> {
@@ -186,6 +237,21 @@ export class RecordsService {
     const start = new Date(Date.UTC(year, monthNumber - 1, 1));
     const end = new Date(Date.UTC(year, monthNumber, 1));
     return { gte: start, lt: end };
+  }
+
+  private encodeCursor(occurredAt: Date, id: string): string {
+    return Buffer.from(JSON.stringify({ occurredAt: occurredAt.toISOString(), id }), "utf8").toString("base64url");
+  }
+
+  private decodeCursor(value: string): { occurredAt: Date; id: string } {
+    try {
+      const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as { occurredAt?: unknown; id?: unknown };
+      const occurredAt = new Date(String(parsed.occurredAt));
+      if (Number.isNaN(occurredAt.getTime()) || typeof parsed.id !== "string" || !parsed.id) throw new Error("invalid cursor");
+      return { occurredAt, id: parsed.id };
+    } catch {
+      throw new AppException("RECORD_CURSOR_INVALID", "分页位置已失效，请刷新后重试", HttpStatus.BAD_REQUEST);
+    }
   }
 
   private async mapRecord(record: {

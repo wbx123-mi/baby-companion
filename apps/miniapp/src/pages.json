@@ -35,7 +35,8 @@
       "path": "pages/growth/index",
       "style": {
         "navigationBarTitleText": "成长",
-        "enablePullDownRefresh": true
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 600
       }
     },
     {

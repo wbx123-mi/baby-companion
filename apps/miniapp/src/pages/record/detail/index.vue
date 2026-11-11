@@ -112,7 +112,7 @@ function goBack(): void {
         <view v-if="canManageRecord" class="record-detail__more" @click="showActions = true">···</view>
       </view>
 
-      <MediaGallery v-if="record.assets.length" :assets="record.assets" previewable />
+      <MediaGallery v-if="record.assets.length" :assets="record.assets" layout="stack" previewable />
 
       <view class="surface-card record-detail__story">
         <text class="record-detail__text">{{ record.content }}</text>

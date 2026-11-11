@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onPullDownRefresh, onShow } from "@dcloudio/uni-app";
+import { onPullDownRefresh, onReachBottom, onShow } from "@dcloudio/uni-app";
 import { useMessage } from "wot-design-uni/components/wd-message-box/index";
 import BabyHero from "@/components/BabyHero.vue";
 import GrowthRecordCard from "@/components/GrowthRecordCard.vue";
 import { RECORD_TYPE_OPTIONS } from "@/constants/records";
 import { useAppStore } from "@/stores/app";
 import type { GrowthRecord, RecordType } from "@/types/domain";
-import { formatMonthKey, formatMonthLabel } from "@/utils/date";
+import { formatMonthLabel } from "@/utils/date";
 import { journalAsset } from "@/utils/journal-assets";
 
 const store = useAppStore();
@@ -22,7 +22,7 @@ function canManageRecord(record: GrowthRecord): boolean {
 }
 
 const months = computed(() => {
-  return [...new Set(store.records.map((record) => formatMonthKey(record.occurredAt)))];
+  return store.recordMonths;
 });
 
 const timeline = computed(() => {
@@ -84,6 +84,10 @@ onPullDownRefresh(async () => {
   }
 });
 
+onReachBottom(() => {
+  void store.loadMoreRecords();
+});
+
 async function chooseType(type?: RecordType): Promise<void> {
   store.setFilters({ ...store.filters, type });
   await store.loadRecords();
@@ -139,7 +143,7 @@ async function handleAction(event: { index: number }): Promise<void> {
 
 <template>
   <view :class="['page-shell', 'growth-page', store.themeClass]">
-    <BabyHero v-if="hasFamily && store.baby" :baby="store.baby" :record-count="store.records.length" @open-profile="openBabyProfile" />
+    <BabyHero v-if="hasFamily && store.baby" :baby="store.baby" :record-count="store.recordsTotal" @open-profile="openBabyProfile" />
 
     <view v-if="hasFamily" class="growth-page__filters">
       <scroll-view scroll-x class="filter-scroll" :show-scrollbar="false">
@@ -201,6 +205,10 @@ async function handleAction(event: { index: number }): Promise<void> {
           />
         </view>
       </view>
+      <view v-if="store.recordsHasMore || store.recordsLoadingMore" class="growth-page__load-more">
+        <wd-loading v-if="store.recordsLoadingMore" />
+        <text>{{ store.recordsLoadingMore ? "正在加载更多记录" : "继续向下查看" }}</text>
+      </view>
       <view class="growth-page__record-action">
         <wd-button block size="large" @click="createRecord">记下这一刻</wd-button>
       </view>
@@ -249,6 +257,16 @@ async function handleAction(event: { index: number }): Promise<void> {
   --wot-button-large-height: 76rpx;
   --wot-button-large-radius: 38rpx;
   --wot-button-large-fs: 28rpx;
+
+  &__load-more {
+    display: flex;
+    min-height: 96rpx;
+    align-items: center;
+    justify-content: center;
+    gap: 14rpx;
+    color: var(--color-text-secondary);
+    font-size: 24rpx;
+  }
 
   &__filters {
     margin: 22rpx -4rpx 0;

@@ -58,6 +58,14 @@ export interface GrowthRecordContract {
   updatedAt: string;
 }
 
+export interface GrowthRecordPageContract {
+  items: GrowthRecordContract[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  total: number;
+  availableMonths: string[];
+}
+
 export interface GrowthRecordFlowerContract {
   flowerCount: number;
   hasFlowered: boolean;

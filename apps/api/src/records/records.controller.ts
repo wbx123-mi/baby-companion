@@ -1,4 +1,4 @@
-import type { GrowthRecordContract, GrowthRecordFlowerContract } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract, GrowthRecordPageContract } from "@baby-companion/contracts";
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { CurrentUser } from "../auth/current-user.decorator";
@@ -21,6 +21,12 @@ export class RecordsController {
   @ApiOperation({ summary: "获取当前家庭宝宝的成长记录" })
   list(@CurrentUser() context: AuthContext, @Query() input: ListRecordsDto): Promise<GrowthRecordContract[]> {
     return this.recordsService.list(context.userId, input);
+  }
+
+  @Get("page")
+  @ApiOperation({ summary: "分页获取当前家庭宝宝的成长记录" })
+  listPage(@CurrentUser() context: AuthContext, @Query() input: ListRecordsDto): Promise<GrowthRecordPageContract> {
+    return this.recordsService.listPage(context.userId, input);
   }
 
   @Get(":recordId")

@@ -1,6 +1,6 @@
 # 宝宝的成长簿：项目交接说明
 
-> 更新日期：2026-09-01。本文不记录密码、Token、AppSecret 等敏感信息；它是新开会话时快速恢复项目上下文的入口。
+> 更新日期：2026-10-29。本文不记录密码、Token、AppSecret 等敏感信息；它是新开会话时快速恢复项目上下文的入口。
 
 ## 1. 项目目标与现状
 
@@ -14,6 +14,12 @@
 - 视觉：日系成长手帐风，页面素材已逐步迁为 `static.baobao365.top` 的远程资源。
 
 当前基础使用已正常：真实微信登录、创建/加入家庭、家庭成员、成长记录、照片上传、个人/宝宝头像、送花。
+
+### 2026-10-29 当前工作状态
+
+- 当前有一组**未提交、未上线**的改动：成长记录改为每页 10 条的游标分页、接近列表底部自动预取、列表封面懒加载，以及详情页图片改为单列等比展示。详见第 9 节。
+- 这组改动已经通过 TypeScript 类型检查、API 单测、API 构建和小程序 `local-real` 构建；尚未提交 Git，也未部署 API 或上传小程序。
+- 生产数据库的 Prisma baseline 已完成；最近一次本地只读计划文件 `.release/db-plan.json` 状态为 `READY`。本轮分页功能没有修改 Prisma schema，不需要生产数据库迁移。
 
 ## 2. 目录与职责
 
@@ -53,6 +59,8 @@ docker-compose.production.yml
 构建产物路径：`apps/miniapp/dist/build/mp-weixin`。导入微信开发者工具时应导入这个目录，而不是仓库根目录或旧的 `dist/dev` 目录。
 
 本地后端与本地数据库通过 Docker Compose 运行；线上 ECS 的 MySQL/MinIO 与本地完全是两套独立数据和磁盘卷，不会自动同步。
+
+`local-real` 为了让微信开发者工具或真机访问本机服务，会在 `apps/miniapp/.env.local-real` 中写入当前 Mac 的局域网 IP，分别供 API（`:3000/api/v1`）和 MinIO 静态素材（`:9000/...`）使用。换 Wi-Fi 后局域网 IP 可能变化：更新这两个地址后，必须重启 `pnpm dev:miniapp:local-real` 才会生效。该文件属于本地环境配置，不应把个人局域网地址作为生产配置发布。
 
 ## 4. 生产环境拓扑
 
@@ -110,6 +118,15 @@ docker stats --no-stream
 ```
 
 服务器为 2GB 配置，已启用 2GB Swap。MySQL、MinIO、Node 同时运行时可用内存会较紧张；照片增加主要消耗磁盘，不会长期占用内存。
+
+### 2026-10-29 生产巡检结果
+
+- `https://api.baobao365.top/api/v1/health/ready` 返回 HTTP `200`，响应包含 `status: ok`、`database: up`。
+- API、MySQL、MinIO 容器均为 `Up`，MySQL 与 MinIO 为 `healthy`。
+- ECS 根磁盘 40G，已用约 13G（约 33%），空间充足；当时系统负载约 `0.02`。
+- 内存总量约 1.6GiB，可用约 213MiB；MySQL、MinIO、API 常驻内存约为 483MiB、278MiB、164MiB。服务正常，但 2G 规格余量偏紧，应持续关注 `free -h` 与 `docker stats --no-stream`。
+- Ubuntu 有待生效的系统更新并提示需要重启；不要因提示立即重启，选择低峰期，在重启前后执行健康检查。
+- 本机 `ssh ecs` 曾出现公网 22 端口超时，而阿里云 Workbench 可连接。此现象优先检查安全组 SSH 入方向是否仍允许当前网络的公网出口 IP；Workbench 的内部来源不代表本机公网 SSH 已恢复。
 
 ### 常用排查命令
 
@@ -194,15 +211,40 @@ pnpm --filter @baby-companion/miniapp build:mp-weixin:production
 
 邀请码有效期 7 天；管理员重新生成邀请码时，旧邀请码会被撤销。当前产品限制一个用户只能加入一个家庭。
 
-## 9. 最近已提交、待部署的改动
+## 9. 当前未提交、待部署的改动
 
-截至本文更新，以下改动已经提交到本地 Git，但不能因此推断已部署到 ECS 或微信：
+当前基线 Commit 为 `7f629b6`。以下 12 个业务与本地配置文件存在未提交修改；此外本文档本身也已更新。它们只在本地工作区，不能据此推断 API、小程序或数据库已经上线：
 
-- `f06e950`：记录仅创建者/管理员可编辑删除；宝宝档案和宝宝头像仅管理员可修改；成长记录返回并展示作者头像。
-- `e9d4b4a`：增加开屏状态提示和失败诊断跳转。
-- `afe90a5`：增加 API 健康检查、容器进程限制、小程序发布回执、数据库发布计划，并整理 Prisma 标准迁移链。
+- 后端新增兼容性分页接口 `GET /records/page`，每页固定 10 条，使用 `occurredAt + id` 游标避免翻页重复或遗漏；旧 `GET /records` 保持不变，避免影响旧小程序。
+- 分页响应新增 `items`、`nextCursor`、`hasMore`、`total`、`availableMonths`；小程序状态管理新增首屏加载、追加加载、并发保护、失效请求保护和记录去重。
+- 成长页在距底部约 600px 时预取下一页；顶部记录数使用后端总数；月份筛选不再仅依赖已加载的前 10 条记录。
+- 记录卡片封面改为原生 `image` 懒加载；详情页图片改为单列、固定内容宽度、按原图比例展示，并启用懒加载。
+- 本地 `apps/miniapp/.env.local-real` 因换 Wi-Fi 更新过局域网 API/素材地址；这是本地配置变动，提交前应确认是否需要保留或还原，不能把其中的局域网地址当作线上配置。
 
-生产数据库只读计划当前为 `BASELINE_REQUIRED`：实际 Schema 已包含基础表、头像和送花结构，但尚未建立 `_prisma_migrations` 台账。API 部署前应先备份生产 MySQL，并在明确确认后登记 baseline。
+涉及文件：
+
+```text
+apps/api/src/records/dto/list-records.dto.ts
+apps/api/src/records/records.controller.ts
+apps/api/src/records/records.service.ts
+apps/miniapp/.env.local-real
+apps/miniapp/src/api/records-api.ts
+apps/miniapp/src/components/GrowthRecordCard.vue
+apps/miniapp/src/components/MediaGallery.vue
+apps/miniapp/src/pages.json
+apps/miniapp/src/pages/growth/index.vue
+apps/miniapp/src/pages/record/detail/index.vue
+apps/miniapp/src/stores/app.ts
+packages/contracts/src/index.ts
+```
+
+上线顺序必须是：**先部署新版 API，再构建、上传并发布新版小程序**。新版小程序会请求 `/records/page`；若 API 尚未部署，该请求会得到 `404`。本轮没有数据库 schema 变更，不执行 `migrate deploy`。
+
+### 本地分页测试数据
+
+- 已向 `local-real` 的本地 MySQL 写入 21 条纯文字测试记录，均以 `分页测试 01` 至 `分页测试 21` 标识；只影响本地 Docker 数据卷，不影响线上。
+- 测试记录 ID 以 `TESTPAGE20261023` 为前缀，可精确识别与清理；其中 12 条在本月、9 条在上月，用于验证分页与月份筛选。没有为测试数据复制或写入图片。
+- 当前家庭原有 1 条记录时，“全部”筛选预期共 22 条：加载顺序应为 10 条、10 条、2 条。
 
 发布前执行：
 

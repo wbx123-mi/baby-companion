@@ -5,9 +5,11 @@ withDefaults(defineProps<{
   assets: MediaAsset[];
   compact?: boolean;
   previewable?: boolean;
+  layout?: "grid" | "stack";
 }>(), {
   compact: false,
   previewable: true,
+  layout: "grid",
 });
 
 function preview(asset: MediaAsset, assets: MediaAsset[]): void {
@@ -19,15 +21,22 @@ function preview(asset: MediaAsset, assets: MediaAsset[]): void {
 </script>
 
 <template>
-  <view v-if="assets.length" :class="['media-gallery', { 'media-gallery--compact': compact }]">
+  <view v-if="assets.length" :class="['media-gallery', `media-gallery--${layout}`, { 'media-gallery--compact': compact }]">
     <view
       v-for="asset in assets.slice(0, compact ? 1 : 9)"
       :key="asset.id"
       :class="['media-gallery__item', `media-gallery__item--${asset.mockTheme || 'local'}`]"
       @click="previewable && preview(asset, assets)"
     >
+      <image
+        v-if="layout === 'stack' && (asset.localPath || asset.url)"
+        class="media-gallery__stack-image"
+        :src="asset.localPath || asset.url || ''"
+        mode="widthFix"
+        lazy-load
+      />
       <wd-img
-        v-if="asset.localPath || asset.url"
+        v-else-if="asset.localPath || asset.url"
         :src="asset.localPath || asset.url || ''"
         width="100%"
         height="100%"
@@ -53,6 +62,12 @@ function preview(asset: MediaAsset, assets: MediaAsset[]): void {
     display: block;
   }
 
+  &--stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18rpx;
+  }
+
   &__item {
     position: relative;
     height: 220rpx;
@@ -76,6 +91,18 @@ function preview(asset: MediaAsset, assets: MediaAsset[]): void {
 
   &--compact &__item {
     height: 300rpx;
+  }
+
+  &--stack &__item {
+    width: 100%;
+    height: auto;
+    border-radius: 20rpx;
+  }
+
+  &__stack-image {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   &__placeholder {

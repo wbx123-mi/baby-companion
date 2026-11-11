@@ -23,6 +23,12 @@ export const useAppStore = defineStore("app", () => {
   const bootstrapped = ref(false);
   const loading = ref(false);
   const recordsLoading = ref(false);
+  const recordsLoadingMore = ref(false);
+  const recordsHasMore = ref(false);
+  const recordsNextCursor = ref<string | null>(null);
+  const recordsTotal = ref(0);
+  const recordMonths = ref<string[]>([]);
+  let recordsRequestVersion = 0;
   const darkMode = ref(Boolean(uni.getStorageSync(THEME_KEY)));
 
   const user = computed(() => bootstrapData.value?.user ?? null);
@@ -49,13 +55,43 @@ export const useAppStore = defineStore("app", () => {
     const currentBaby = baby.value;
     if (!currentBaby) {
       records.value = [];
+      recordsHasMore.value = false;
+      recordsNextCursor.value = null;
+      recordsTotal.value = 0;
+      recordMonths.value = [];
       return;
     }
+    const requestVersion = ++recordsRequestVersion;
+    recordsLoadingMore.value = false;
     recordsLoading.value = true;
     try {
-      records.value = await recordsApi.list(currentBaby.id, filters.value);
+      const page = await recordsApi.listPage(currentBaby.id, filters.value);
+      if (requestVersion !== recordsRequestVersion) return;
+      records.value = page.items;
+      recordsHasMore.value = page.hasMore;
+      recordsNextCursor.value = page.nextCursor;
+      recordsTotal.value = page.total;
+      recordMonths.value = page.availableMonths;
     } finally {
-      recordsLoading.value = false;
+      if (requestVersion === recordsRequestVersion) recordsLoading.value = false;
+    }
+  }
+
+  async function loadMoreRecords(): Promise<void> {
+    const currentBaby = baby.value;
+    if (!currentBaby || recordsLoading.value || recordsLoadingMore.value || !recordsHasMore.value || !recordsNextCursor.value) return;
+    const requestVersion = recordsRequestVersion;
+    recordsLoadingMore.value = true;
+    try {
+      const page = await recordsApi.listPage(currentBaby.id, filters.value, recordsNextCursor.value);
+      if (requestVersion !== recordsRequestVersion) return;
+      const knownIds = new Set(records.value.map(({ id }) => id));
+      records.value.push(...page.items.filter(({ id }) => !knownIds.has(id)));
+      recordsHasMore.value = page.hasMore;
+      recordsNextCursor.value = page.nextCursor;
+      recordsTotal.value = page.total;
+    } finally {
+      if (requestVersion === recordsRequestVersion) recordsLoadingMore.value = false;
     }
   }
 
@@ -129,6 +165,10 @@ export const useAppStore = defineStore("app", () => {
     bootstrapped,
     loading,
     recordsLoading,
+    recordsLoadingMore,
+    recordsHasMore,
+    recordsTotal,
+    recordMonths,
     darkMode,
     user,
     family,
@@ -136,6 +176,7 @@ export const useAppStore = defineStore("app", () => {
     themeClass,
     bootstrap,
     loadRecords,
+    loadMoreRecords,
     saveRecord,
     deleteRecord,
     saveBaby,

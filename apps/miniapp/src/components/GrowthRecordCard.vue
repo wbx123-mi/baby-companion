@@ -61,7 +61,7 @@ const recordTypeIcons: Record<RecordType, string> = {
       <view class="record-card__body">
         <text class="record-card__content">{{ record.content }}</text>
         <view class="record-card__cover">
-          <wd-img v-if="coverUrl" class="record-card__cover-image" :src="coverUrl" width="100%" height="100%" mode="aspectFill" :enable-preview="false" />
+          <image v-if="coverUrl" class="record-card__cover-image" :src="coverUrl" mode="aspectFill" lazy-load />
           <view v-else class="record-card__cover-empty" />
         </view>
       </view>

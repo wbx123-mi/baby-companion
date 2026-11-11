@@ -16,4 +16,9 @@ export class ListRecordsDto {
   @IsOptional()
   @Matches(/^\d{4}-(0[1-9]|1[0-2])$/)
   month?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  cursor?: string;
 }

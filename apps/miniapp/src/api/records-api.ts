@@ -1,4 +1,4 @@
-import type { GrowthRecordContract, GrowthRecordFlowerContract } from "@baby-companion/contracts";
+import type { GrowthRecordContract, GrowthRecordFlowerContract, GrowthRecordPageContract } from "@baby-companion/contracts";
 import { authenticatedRequest } from "./auth-api";
 import type { GrowthRecord, RecordFilters, SaveRecordInput } from "@/types/domain";
 
@@ -20,14 +20,15 @@ function createClientRequestId(): string {
 }
 
 export const recordsApi = {
-  async list(babyId: string, filters: RecordFilters): Promise<GrowthRecord[]> {
+  async listPage(babyId: string, filters: RecordFilters, cursor?: string): Promise<Omit<GrowthRecordPageContract, "items"> & { items: GrowthRecord[] }> {
     const query = [
       `babyId=${encodeURIComponent(babyId)}`,
       ...(filters.type ? [`type=${encodeURIComponent(filters.type)}`] : []),
       ...(filters.month ? [`month=${encodeURIComponent(filters.month)}`] : []),
+      ...(cursor ? [`cursor=${encodeURIComponent(cursor)}`] : []),
     ].join("&");
-    const records = await authenticatedRequest<GrowthRecordContract[]>({ path: `/records?${query}` });
-    return records.map(toGrowthRecord);
+    const page = await authenticatedRequest<GrowthRecordPageContract>({ path: `/records/page?${query}` });
+    return { ...page, items: page.items.map(toGrowthRecord) };
   },
 
   async get(recordId: string): Promise<GrowthRecord> {
