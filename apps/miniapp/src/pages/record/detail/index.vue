@@ -58,7 +58,7 @@ async function sendFlower(): Promise<void> {
   if (!record.value || record.value.hasFlowered || flowerSubmitting.value) return;
   flowerSubmitting.value = true;
   try {
-    const flowerState = await recordsApi.sendFlower(record.value.id);
+    const flowerState = await store.sendRecordFlower(record.value.id);
     record.value = { ...record.value, ...flowerState };
     uni.showToast({ title: "小花已送达", icon: "success" });
   } catch (error) {

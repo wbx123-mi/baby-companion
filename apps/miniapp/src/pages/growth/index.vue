@@ -14,6 +14,7 @@ const store = useAppStore();
 const message = useMessage();
 const showActions = ref(false);
 const selectedRecord = ref<GrowthRecord | null>(null);
+let isReturningFromDetail = false;
 const hasFamily = computed(() => Boolean(store.family && store.baby));
 const isFamilyAdmin = computed(() => store.family?.role === "ADMIN");
 
@@ -73,6 +74,10 @@ async function initialize(): Promise<void> {
 }
 
 onShow(() => {
+  if (isReturningFromDetail) {
+    isReturningFromDetail = false;
+    return;
+  }
   void initialize();
 });
 
@@ -99,7 +104,13 @@ async function chooseMonth(month?: string): Promise<void> {
 }
 
 function openRecord(recordId: string): void {
-  uni.navigateTo({ url: `/pages/record/detail/index?id=${recordId}` });
+  isReturningFromDetail = true;
+  uni.navigateTo({
+    url: `/pages/record/detail/index?id=${recordId}`,
+    fail() {
+      isReturningFromDetail = false;
+    },
+  });
 }
 
 function openActions(record: GrowthRecord): void {

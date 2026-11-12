@@ -110,6 +110,13 @@ export const useAppStore = defineStore("app", () => {
     await loadRecords();
   }
 
+  async function sendRecordFlower(recordId: string) {
+    const flowerState = await recordsApi.sendFlower(recordId);
+    const record = records.value.find(({ id }) => id === recordId);
+    if (record) Object.assign(record, flowerState);
+    return flowerState;
+  }
+
   async function saveBaby(input: UpdateBabyInput): Promise<Baby> {
     const currentBaby = baby.value;
     if (!currentBaby) throw new Error("宝宝档案不存在");
@@ -179,6 +186,7 @@ export const useAppStore = defineStore("app", () => {
     loadMoreRecords,
     saveRecord,
     deleteRecord,
+    sendRecordFlower,
     saveBaby,
     saveFamily,
     setBootstrapData,
